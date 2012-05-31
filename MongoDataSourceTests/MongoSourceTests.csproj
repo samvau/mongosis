@@ -19,7 +19,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
+    <OutputPath>C:\Users\mbell\Documents\Visual Studio 2010\Projects\MongoSsisDataSource\MongoSourceTests\bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -54,7 +54,7 @@
     <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="Telerik.JustMock">
-      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Telerik\JustMock\Libraries\Telerik.JustMock.dll</HintPath>
+      <HintPath>C:\Program Files (x86)\Telerik\JustMock\Libraries\Telerik.JustMock.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -68,13 +68,14 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Shadow Include="Test References\MongoSsisDataSourceInCSharp.accessor" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\MongoSsisDataSourceInCSharp\MongoSsisDataSource.csproj">
-      <Project>{35E9C33C-24A7-441E-BDF2-560E6D6C9190}</Project>
+    <ProjectReference Include="..\MongoSsisDataSource\MongoSsisDataSource.csproj">
+      <Project>{EA2F5DA3-DF0C-49E3-958B-508A13D88729}</Project>
       <Name>MongoSsisDataSource</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup />
+  <ItemGroup>
+    <Shadow Include="Test References\MongoSsisDataSource.accessor" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
