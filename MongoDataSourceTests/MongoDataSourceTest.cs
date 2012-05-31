@@ -8,6 +8,7 @@ using Microsoft.SqlServer.Dts.Pipeline.Wrapper;
 
 using Microsoft.SqlServer.Dts.Runtime.Wrapper;
 using MongoDB.Bson;
+using MongoDB.Driver;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using MongoDataSource;
 using Telerik.JustMock;
@@ -17,7 +18,7 @@ using Telerik.JustMock;
 ///to contain all MongoDataSourceTest Unit Tests
 ///</summary>
 [TestClass()]
-public class MongoDataSourceTest
+public class MongoSourceTests
 {
 
     ///<summary>
@@ -53,6 +54,15 @@ public class MongoDataSourceTest
     ///A test for GetColumnDataType
     ///</summary>
     [TestMethod(), DeploymentItem("MongoSsisDataSource.dll")]
+    public void TestGetColumnDataTypeReturnsDateTypeForBsonString()
+    {
+        CheckForCorrectColumnDataType(new BsonString("value"), DataType.DT_WSTR);
+    }
+
+    ///<summary>
+    ///A test for GetColumnDataType
+    ///</summary>
+    [TestMethod(), DeploymentItem("MongoSsisDataSource.dll")]
     public void TestGetColumnDataTypeReturnsBooleanTypeForBsonBoolean()
     {
         CheckForCorrectColumnDataType(BsonBoolean.True, DataType.DT_BOOL);
@@ -71,7 +81,8 @@ public class MongoDataSourceTest
     [TestMethod(), DeploymentItem("MongoSsisDataSource.dll")]
     public void GetDataTypeValueFromBsonValueTestWithInt32()
     {
-        CheckForCorrectDataTypeFromBson(new BsonInt64(1234), DataType.DT_I4, new BsonInt64(1234).ToInt64());
+        Int64 expected = 1234;
+        CheckForCorrectDataTypeFromBson(new BsonInt32(1234), DataType.DT_I4, expected);
     }
 
     ///<summary>
@@ -80,7 +91,8 @@ public class MongoDataSourceTest
     [TestMethod(), DeploymentItem("MongoSsisDataSource.dll")]
     public void GetDataTypeValueFromBsonValueTestWithInt64()
     {
-        CheckForCorrectDataTypeFromBson(new BsonInt64(1234), DataType.DT_I8, new BsonInt64(1234).ToInt64());
+        Int64 expected = 1234;
+        CheckForCorrectDataTypeFromBson(new BsonInt64(expected), DataType.DT_I8, expected);
     }
 
     ///<summary>
@@ -99,7 +111,8 @@ public class MongoDataSourceTest
     [TestMethod(), DeploymentItem("MongoSsisDataSource.dll")]
     public void GetDataTypeValueFromBsonValueTestWithShortDouble()
     {
-        CheckForCorrectDataTypeFromBson(new BsonDouble(1234.1), DataType.DT_R4, 1234.1);
+        Double expected = 1234.1;
+        CheckForCorrectDataTypeFromBson(new BsonDouble(expected), DataType.DT_R4, expected);
     }
 
     ///<summary>
@@ -108,7 +121,18 @@ public class MongoDataSourceTest
     [TestMethod(), DeploymentItem("MongoSsisDataSource.dll")]
     public void GetDataTypeValueFromBsonValueTestWithLongDouble()
     {
-        CheckForCorrectDataTypeFromBson(new BsonDouble(1234.1), DataType.DT_R8, 1234.1);
+        Double expected = 1234.1;
+        CheckForCorrectDataTypeFromBson(new BsonDouble(expected), DataType.DT_R8, expected);
+    }
+
+    ///<summary>
+    ///A test for GetDataTypeValueFromBsonValue
+    ///</summary>
+    [TestMethod(), DeploymentItem("MongoSsisDataSource.dll")]
+    public void GetDataTypeValueFromBsonValueTestWithString()
+    {
+        String expected = "value";
+        CheckForCorrectDataTypeFromBson(new BsonString(expected), DataType.DT_WSTR, expected);
     }
 
     ///<summary>
@@ -156,6 +180,47 @@ public class MongoDataSourceTest
     [TestMethod(), DeploymentItem("MongoSsisDataSource.dll")]
     public void TestBuildBooleanOutputColumn()
     {
+        TestBuildOutputColumn("elname", BsonBoolean.True, DataType.DT_BOOL, 0);
+    }
+
+    ///<summary>
+    ///A test for BuildOutputColumn
+    ///</summary>
+    [TestMethod(), DeploymentItem("MongoSsisDataSource.dll")]
+    public void TestBuildIntegerOutputColumn()
+    {
+        TestBuildOutputColumn("elname", new BsonInt64(123), DataType.DT_I8, 0);
+    }
+
+    ///<summary>
+    ///A test for BuildOutputColumn
+    ///</summary>
+    [TestMethod(), DeploymentItem("MongoSsisDataSource.dll")]
+    public void TestBuildDoubleOutputColumn()
+    {
+        TestBuildOutputColumn("elname", new BsonDouble(12.3), DataType.DT_R8, 0);
+    }
+
+    ///<summary>
+    ///A test for BuildOutputColumn
+    ///</summary>
+    [TestMethod(), DeploymentItem("MongoSsisDataSource.dll")]
+    public void TestBuildDateOutputColumn()
+    {
+        TestBuildOutputColumn("elname", new BsonDateTime(DateTime.Now), DataType.DT_DATE, 0);
+    }
+
+    ///<summary>
+    ///A test for BuildOutputColumn
+    ///</summary>
+    [TestMethod(), DeploymentItem("MongoSsisDataSource.dll")]
+    public void TestBuildStringOutputColumn()
+    {
+        TestBuildOutputColumn("elname", new BsonString("value"), DataType.DT_WSTR, 256);
+    }
+
+    public void TestBuildOutputColumn(String elementname, BsonValue bsonValue, DataType expectedDataType, int length)
+    {
         MongoDataSource_Accessor target = new MongoDataSource_Accessor();
 
         IDTSOutputColumnCollection100 outputCollection = Mock.Create<IDTSOutputColumnCollection100>(Constructor.Mocked);
@@ -164,14 +229,31 @@ public class MongoDataSourceTest
 
         Mock.Arrange(() => outputCollection.New()).Returns(expected);
 
-        String elName = "elName";
-        BsonValue value = BsonBoolean.True;
-
-        BsonElement el = new BsonElement(elName, value);
-        Mock.ArrangeSet(() => expected.Name = Arg.Matches<String>(x => x == elName));
+        BsonElement el = new BsonElement(elementname, bsonValue);
+        Mock.ArrangeSet(() => expected.Name = Arg.Matches<String>(x => x == elementname));
 
         IDTSOutputColumn100 actual = target.BuildOutputColumn(outputCollection, el);
 
-        Mock.Assert(() => expected.SetDataTypeProperties(DataType.DT_BOOL, 0, 0, 0, 0));
+        Mock.Assert(() => expected.SetDataTypeProperties(expectedDataType, length, 0, 0, 0));
+
+    }
+
+    /// <summary>
+    ///A test for ReleaseConnections
+    ///</summary>
+    [TestMethod()]
+    public void TestReleaseConnectionsDelegatesToConnectionManager()
+    {
+        MongoDataSource_Accessor target = new MongoDataSource_Accessor();
+
+        IDTSConnectionManager100 connManager = Mock.Create<IDTSConnectionManager100>(Constructor.Mocked);
+        target.m_ConnMgr = connManager;
+
+        MongoDatabase mockedDb = Mock.Create<MongoDatabase>(Constructor.Mocked);
+        target.database = mockedDb;
+
+        target.ReleaseConnections();
+
+        Mock.Assert(() => connManager.ReleaseConnection(mockedDb));
     }
 }
