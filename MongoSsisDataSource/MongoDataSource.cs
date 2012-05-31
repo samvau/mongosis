@@ -123,9 +123,6 @@ namespace MongoDataSource
         {
             IDTSOutputColumn100 outColumn = outputColumnCollection.New();
 
-            // Set column data type properties.
-            bool isLong = false;
-
             // Set the properties of the output column.
             outColumn.Name = bsonElement.Name;
 
