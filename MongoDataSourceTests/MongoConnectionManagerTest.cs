@@ -25,7 +25,7 @@ public class MongoConnectionManagerTest
     [TestMethod()]
     public void AcquireConnectionTest()
     {
-        Assert.Inconclusive("Can't test static calls, so can't test this method");
+        Assert.Inconclusive("Can't test static calls (with current mocking framework - JustMock), so can't test this method");
     }
 
     ///<summary>
