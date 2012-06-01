@@ -81,6 +81,10 @@ namespace MongoDataSource {
 
         public override object AcquireConnection(object txn) {
 
+            if (_connectionString == null) {
+                UpdateConnectionString();
+            }
+
             MongoServer mongoinstance = MongoServer.Create(_connectionString);
             MongoDatabase database = mongoinstance.GetDatabase(DatabaseName);
 
