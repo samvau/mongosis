@@ -100,7 +100,15 @@ namespace MongoDataSource
                 AcquireConnections(null);
             }
 
-            BsonDocument document = database.GetCollection(collectionName).FindOne();
+
+            MongoCollection<BsonDocument> collection = database.GetCollection(collectionName);
+
+            if (collection.Count() == 0)
+            {
+                throw new Exception(collectionName + " collection has no records");
+            }
+                
+            BsonDocument document = collection.FindOne();
 
             // Walk the columns in the schema, 
             // and for each data column create an output column and an external metadata column.
