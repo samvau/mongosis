@@ -56,7 +56,7 @@ public class MongoSourceTests
     [TestMethod(), DeploymentItem("MongoSsisDataSource.dll")]
     public void TestGetColumnDataTypeReturnsDateTypeForBsonString()
     {
-        CheckForCorrectColumnDataType(new BsonString("value"), DataType.DT_WSTR);
+        CheckForCorrectColumnDataType(new BsonString("value"), DataType.DT_STR);
     }
 
     ///<summary>
@@ -132,7 +132,7 @@ public class MongoSourceTests
     public void GetDataTypeValueFromBsonValueTestWithString()
     {
         String expected = "value";
-        CheckForCorrectDataTypeFromBson(new BsonString(expected), DataType.DT_WSTR, expected);
+        CheckForCorrectDataTypeFromBson(new BsonString(expected), DataType.DT_STR, expected);
     }
 
     ///<summary>
@@ -169,8 +169,7 @@ public class MongoSourceTests
     {
         MongoDataSource_Accessor target = new MongoDataSource_Accessor();
 
-        object actual = null;
-        actual = target.GetDataTypeValueFromBsonValue(bsonValue, dataType);
+        object actual = target.GetDataTypeValueFromBsonValue(bsonValue, dataType);
         Assert.AreEqual(expectedValue, actual);
     }
 
@@ -180,7 +179,7 @@ public class MongoSourceTests
     [TestMethod(), DeploymentItem("MongoSsisDataSource.dll")]
     public void TestBuildBooleanOutputColumn()
     {
-        TestBuildOutputColumn("elname", BsonBoolean.True, DataType.DT_BOOL, 0);
+        TestBuildOutputColumn("elname", BsonBoolean.True, DataType.DT_BOOL, 0, 0);
     }
 
     ///<summary>
@@ -189,7 +188,7 @@ public class MongoSourceTests
     [TestMethod(), DeploymentItem("MongoSsisDataSource.dll")]
     public void TestBuildIntegerOutputColumn()
     {
-        TestBuildOutputColumn("elname", new BsonInt64(123), DataType.DT_I8, 0);
+        TestBuildOutputColumn("elname", new BsonInt64(123), DataType.DT_I8, 0, 0);
     }
 
     ///<summary>
@@ -198,7 +197,7 @@ public class MongoSourceTests
     [TestMethod(), DeploymentItem("MongoSsisDataSource.dll")]
     public void TestBuildDoubleOutputColumn()
     {
-        TestBuildOutputColumn("elname", new BsonDouble(12.3), DataType.DT_R8, 0);
+        TestBuildOutputColumn("elname", new BsonDouble(12.3), DataType.DT_R8, 0, 0);
     }
 
     ///<summary>
@@ -207,7 +206,7 @@ public class MongoSourceTests
     [TestMethod(), DeploymentItem("MongoSsisDataSource.dll")]
     public void TestBuildDateOutputColumn()
     {
-        TestBuildOutputColumn("elname", new BsonDateTime(DateTime.Now), DataType.DT_DATE, 0);
+        TestBuildOutputColumn("elname", new BsonDateTime(DateTime.Now), DataType.DT_DATE, 0,0);
     }
 
     ///<summary>
@@ -216,10 +215,10 @@ public class MongoSourceTests
     [TestMethod(), DeploymentItem("MongoSsisDataSource.dll")]
     public void TestBuildStringOutputColumn()
     {
-        TestBuildOutputColumn("elname", new BsonString("value"), DataType.DT_WSTR, 256);
+        TestBuildOutputColumn("elname", new BsonString("value"), DataType.DT_STR, 256,1252);
     }
 
-    public void TestBuildOutputColumn(String elementname, BsonValue bsonValue, DataType expectedDataType, int length)
+    public void TestBuildOutputColumn(String elementname, BsonValue bsonValue, DataType expectedDataType, int length, int codepage)
     {
         MongoDataSource_Accessor target = new MongoDataSource_Accessor();
 
@@ -234,7 +233,7 @@ public class MongoSourceTests
 
         IDTSOutputColumn100 actual = target.BuildOutputColumn(outputCollection, el);
 
-        Mock.Assert(() => expected.SetDataTypeProperties(expectedDataType, length, 0, 0, 0));
+        Mock.Assert(() => expected.SetDataTypeProperties(expectedDataType, length, 0, 0, codepage));
 
     }
 
