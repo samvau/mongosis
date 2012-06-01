@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("MongoSsisDataSourceInCSharp")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyTitle("MongoDB Data Source")]
+[assembly: AssemblyDescription("SSIS data source for MongoDB")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("MongoSsisDataSourceInCSharp")]
+[assembly: AssemblyCompany("Xbridge Ltd.")]
+[assembly: AssemblyProduct("MongoDB Data Source")]
 [assembly: AssemblyCopyright("Copyright ©  2012")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
