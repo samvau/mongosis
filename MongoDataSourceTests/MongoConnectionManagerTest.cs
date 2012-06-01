@@ -102,13 +102,13 @@ public class MongoConnectionManagerTest
         string user = "user1";
         string pwd = "pwd1";
         string server = "server1";
-        string expected = "mongodb://" + user + ":" + pwd + "@" + server;
+
         string actual = null;
         target.UserName = user;
         target.Password = pwd;
         target.ServerName = server;
         actual = target.ConnectionString;
-        Assert.AreEqual(expected, actual);
+        Assert.AreEqual("mongodb://" + user + ":" + pwd + "@" + server, actual);
     }
 
     ///<summary>
