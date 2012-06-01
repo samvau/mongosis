@@ -1,6 +1,8 @@
 # Custom SSIS Data Source and Connection Manager for Mongo DB
 
-This is the Custom Adapter for Microsoft's SSIS to connect to MongoDB
+This is the Custom Adapter for Microsoft's SSIS to connect to MongoDB, licensed under the MIT license.
+
+
 
 ## Dependencies
 

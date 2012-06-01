@@ -1,9 +1,9 @@
-﻿using Microsoft.VisualBasic;
+﻿/*
+ * Copyright (c) 2012 Xbridge Ltd
+ * See the file license.txt for copying permission.
+ */
+
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Data;
-using System.Diagnostics;
 using Microsoft.SqlServer.Dts.Pipeline.Wrapper;
 
 using Microsoft.SqlServer.Dts.Runtime.Wrapper;

@@ -1,8 +1,8 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Data;
-using System.Diagnostics;
+﻿/*
+ * Copyright (c) 2012 Xbridge Ltd
+ * See the file license.txt for copying permission.
+ */
+
 using Microsoft.SqlServer.Dts.Runtime;
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
