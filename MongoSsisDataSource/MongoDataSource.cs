@@ -268,19 +268,20 @@ namespace MongoDataSource
             else if (dt == DataType.DT_R8 | dt == DataType.DT_R4)
             {
                 return value.ToDouble();
-
-
             }
             else if (dt == DataType.DT_DATE | dt == DataType.DT_DBTIMESTAMPOFFSET | dt == DataType.DT_DBTIMESTAMP)
             {
                 return DateTime.Parse(value.ToString());
-
-
             }
             else
             {
-                return value.ToString();
+                if (!value.IsString)
+                {
+                    ComponentMetaData.FireWarning(0, "MongoDataSource", "Converting " + value.BsonType + " to string, though datatype was " + dt, String.Empty, 0);
+                }
 
+
+                return value.ToString();
             }
         }
 
