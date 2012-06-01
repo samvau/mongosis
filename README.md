@@ -22,18 +22,18 @@ http://www.telerik.com/freemocking.aspx
 
 ## Usage
 
-* In SQL Server Data Tools, create a 'Business Intelligence > Integration Services' project.
-* Create a MongoDB Connection Manager in the Connection Managers area.
-* Set the database, server, username and password values in the Component Properties
-* Drag a MongoDB Data Source in to the Data Flow area
-* Right click the MongoDB data source and click Edit
-* Under Connection Managers, ensure that MongoDBConnectionManager is selected.
-* In the Component Properties tab, enter the name of the Mongo collection you wish to pull data from in the 'CollectionName' custom property.
-* Under Input and Output properties, verify that all the expected fields are listed under Output - Output Columns
-* Clicking onto each Output Column, ensure that the DataType field is correct
-* Drag your data destination to the Data Flow area
-* Click on the MongoDB Data Source and create a connection to the destination.
-* Select 'Start Debugging' (key F5) to begin the data flow process.
+1. In SQL Server Data Tools, create a 'Business Intelligence > Integration Services' project.
+2. Create a MongoDB Connection Manager in the Connection Managers area.
+3. Set the database, server, username and password values in the Component Properties
+4. Drag a MongoDB Data Source in to the Data Flow area
+5. Right click the MongoDB data source and click Edit
+6. Under Connection Managers, ensure that MongoDBConnectionManager is selected.
+7. In the Component Properties tab, enter the name of the Mongo collection you wish to pull data from in the 'CollectionName' custom property.
+8. Under Input and Output properties, verify that all the expected fields are listed under Output - Output Columns
+9. Clicking onto each Output Column, ensure that the DataType field is correct
+10. Drag your data destination to the Data Flow area
+11. Click on the MongoDB Data Source and create a connection to the destination.
+12. Select 'Start Debugging' (key F5) to begin the data flow process.
 
 ## Notes:
 
