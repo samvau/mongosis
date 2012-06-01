@@ -136,13 +136,15 @@ namespace MongoDataSource
 
             DataType dt = GetColumnDataType(bsonElement.Value);
             int length = 0;
+            int codepage = 0;
 
-            if (dt == DataType.DT_WSTR)
+            if (dt == DataType.DT_STR)
             {
                 length = 256;
+                codepage = 1252;
             }
 
-            outColumn.SetDataTypeProperties(dt, length, 0, 0, 0);
+            outColumn.SetDataTypeProperties(dt, length, 0, 0, codepage);
 
             return outColumn;
         }
@@ -161,7 +163,7 @@ namespace MongoDataSource
 
         private DataType GetColumnDataType(BsonValue mongoValue)
         {
-            DataType dt = DataType.DT_WSTR;
+            DataType dt = DataType.DT_STR;
 
             if (mongoValue.IsBsonDateTime)
             {
@@ -218,30 +220,38 @@ namespace MongoDataSource
                 throw new Exception("The collection name is null or empty!");
             }
 
+            ComponentMetaData.FireInformation(0, "MongoDataSource", "processing collection " + collectionNameProp.Value, String.Empty, 0, false);
+
             foreach (BsonDocument document in database.GetCollection(collectionNameProp.Value).FindAll())
             {
+
                 buffer.AddRow();
                 for (int x = 0; x <= columnInformation.Count - 1; x++)
                 {
                     ColumnInfo ci = (ColumnInfo)columnInformation[x];
-                  
-                    if (document[ci.ColumnName] != null)
+
+                    try
                     {
-                        if (document.GetValue(ci.ColumnName).IsBsonNull)
+                        if (document[ci.ColumnName] != null)
                         {
-                            buffer.SetNull(ci.BufferColumnIndex);
+                            if (document.GetValue(ci.ColumnName).IsBsonNull)
+                            {
+                                buffer.SetNull(ci.BufferColumnIndex);
+                            }
+                            else
+                            {
+                                buffer[ci.BufferColumnIndex] = GetValue(document, ci);
+                            }
                         }
                         else
                         {
-                            
-                            buffer[ci.BufferColumnIndex] = GetValue(document, ci);
+                            buffer.SetNull(ci.BufferColumnIndex);
                         }
                     }
-                    else
+                    catch (Exception e)
                     {
-                        buffer.SetNull(ci.BufferColumnIndex);
+                        throw new Exception("There was an issue with column '" + ci.ColumnName + "'", e);
                     }
-
                 }
             }
 
