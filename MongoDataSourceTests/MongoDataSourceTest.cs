@@ -256,4 +256,5 @@ public class MongoSourceTests
 
         Mock.Assert(() => connManager.ReleaseConnection(mockedDb));
     }
+
 }
