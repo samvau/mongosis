@@ -14,11 +14,11 @@ http://www.telerik.com/freemocking.aspx
 
 ## Deployment
 
-	* Copy DLL file to:
-	** C:\Program Files (x86)\Microsoft SQL Server\110\DTS\PiplineComponents
-	** C:\Program Files (x86)\Microsoft SQL Server\110\DTS\Connections
-	* Run gacutil.exe with '/iF' option to load DLL in to the GLobal Assembly Cache, util is found at:
-	** C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\bin\NETFX 4.0 Tools\gacutil.exe
+* Copy DLL file to:
+	* C:\Program Files (x86)\Microsoft SQL Server\110\DTS\PiplineComponents
+	* C:\Program Files (x86)\Microsoft SQL Server\110\DTS\Connections
+* Run gacutil.exe with '/iF' option to load DLL in to the GLobal Assembly Cache, util is found at:
+	* C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\bin\NETFX 4.0 Tools\gacutil.exe
 
 ## Usage
 
@@ -37,5 +37,5 @@ http://www.telerik.com/freemocking.aspx
 
 ## Notes:
 
-	* Ensure that 'Run64BitRuntime' option in SSIS project Configuration/Debugging properties is set to 'False'.
-	* If you're running the 32-bit version of Windows there is no 'Program Files(x86)' so deploy to folders under 'Program Files' instead.
+* Ensure that 'Run64BitRuntime' option in SSIS project Configuration/Debugging properties is set to 'False'.
+* If you're running the 32-bit version of Windows there is no 'Program Files(x86)' so deploy to folders under 'Program Files' instead.
