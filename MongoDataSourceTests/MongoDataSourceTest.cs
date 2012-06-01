@@ -257,4 +257,38 @@ public class MongoSourceTests
         Mock.Assert(() => connManager.ReleaseConnection(mockedDb));
     }
 
+    /// <summary>
+    ///A test for BuildExternalMetadataColumn
+    ///</summary>
+    [TestMethod()]
+    [DeploymentItem("MongoSsisDataSource.dll")]
+    public void PopulateExternalMetadataColumnTest()
+    {
+        MongoDataSource_Accessor target = new MongoDataSource_Accessor();
+        IDTSOutputColumn100 outputColumn = Mock.Create<IDTSOutputColumn100>(Constructor.Mocked);
+
+        String expectedName = "name";
+        int expectedPrecision = 1;
+        int expectedLength = 2;
+        int expectedScale = 3;
+        DataType expectedDataType = DataType.DT_TEXT;
+
+        Mock.Arrange(() => outputColumn.Name).Returns(expectedName);
+        Mock.Arrange(() => outputColumn.Precision).Returns(expectedPrecision);
+        Mock.Arrange(() => outputColumn.Length).Returns(expectedLength);
+        Mock.Arrange(() => outputColumn.DataType).Returns(expectedDataType);
+        Mock.Arrange(() => outputColumn.Scale).Returns(expectedScale);
+
+        IDTSExternalMetadataColumn100 expected = Mock.Create<IDTSExternalMetadataColumn100>(Constructor.Mocked);
+
+        Mock.ArrangeSet(() => expected.Name = Arg.Matches<String>(x => x == expectedName)).OccursOnce();
+        Mock.ArrangeSet(() => expected.Precision = Arg.Matches<int>(x => x == expectedPrecision)).OccursOnce();
+        Mock.ArrangeSet(() => expected.Length = Arg.Matches<int>(x => x == expectedLength)).OccursOnce();
+        Mock.ArrangeSet(() => expected.DataType = Arg.Matches<DataType>(x => x == expectedDataType)).OccursOnce();
+        Mock.ArrangeSet(() => expected.Scale = Arg.Matches<int>(x => x == expectedScale)).OccursOnce();
+
+        target.PopulateExternalMetadataColumn(expected, outputColumn);
+
+        Mock.Assert(expected);
+    }
 }
