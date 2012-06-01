@@ -119,7 +119,8 @@ namespace MongoDataSource
                 {
                     IDTSOutputColumn100 outColumn = BuildOutputColumn(output.OutputColumnCollection, bsonElement);
 
-                    IDTSExternalMetadataColumn100 externalColumn = BuildExternalMetadataColumn(output, outColumn);
+                    IDTSExternalMetadataColumn100 externalColumn = output.ExternalMetadataColumnCollection.New();
+                    PopulateExternalMetadataColumn(externalColumn, outColumn);
 
                     // Map the external column to the output column.
                     outColumn.ExternalMetadataColumnID = externalColumn.ID;
@@ -149,16 +150,13 @@ namespace MongoDataSource
             return outColumn;
         }
 
-        private IDTSExternalMetadataColumn100 BuildExternalMetadataColumn(IDTSOutput100 outputCollection, IDTSOutputColumn100 outputColumn)
+        private void PopulateExternalMetadataColumn(IDTSExternalMetadataColumn100 externalColumnToPopulate, IDTSOutputColumn100 outputColumn)
         {
-            IDTSExternalMetadataColumn100 externalColumn = outputCollection.ExternalMetadataColumnCollection.New();
-            externalColumn.Name = outputColumn.Name;
-            externalColumn.Precision = outputColumn.Precision;
-            externalColumn.Length = outputColumn.Length;
-            externalColumn.DataType = outputColumn.DataType;
-            externalColumn.Scale = outputColumn.Scale;
-
-            return externalColumn;
+            externalColumnToPopulate.Name = outputColumn.Name;
+            externalColumnToPopulate.Precision = outputColumn.Precision;
+            externalColumnToPopulate.Length = outputColumn.Length;
+            externalColumnToPopulate.DataType = outputColumn.DataType;
+            externalColumnToPopulate.Scale = outputColumn.Scale;
         }
 
         private DataType GetColumnDataType(BsonValue mongoValue)
