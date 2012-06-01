@@ -1,0 +1,12 @@
+.DS_Store
+MongoSourceTests/obj/
+MongoSourceTests/bin/
+MongoSsisDataSource/bin/
+MongoSsisDataSource/obj/
+TestResults/
+TraceAndTestImpact.testsettings
+MongoSsisDataSource.suo
+Local.testsettings
+MongoDataSourceTests/bin/
+MongoDataSourceTests/Test References/
+MongoDataSourceTests/obj/
