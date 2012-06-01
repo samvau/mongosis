@@ -18,16 +18,14 @@ using Telerik.JustMock;
 ///to contain all MongoDataSourceTest Unit Tests
 ///</summary>
 [TestClass()]
-public class MongoSourceTests
-{
+public class MongoSourceTests {
 
     ///<summary>
     ///A test for GetColumnDataType
     ///</summary>
     [TestMethod(), DeploymentItem("MongoSsisDataSource.dll")]
 
-    public void TestGetColumnDataTypeReturnsIntegerTypeForBsonInteger()
-    {
+    public void TestGetColumnDataTypeReturnsIntegerTypeForBsonInteger() {
         CheckForCorrectColumnDataType(new BsonInt32(12), DataType.DT_I8);
 
     }
@@ -36,8 +34,7 @@ public class MongoSourceTests
     ///A test for GetColumnDataType
     ///</summary>
     [TestMethod(), DeploymentItem("MongoSsisDataSource.dll")]
-    public void TestGetColumnDataTypeReturnsDoubleTypeForBsonDouble()
-    {
+    public void TestGetColumnDataTypeReturnsDoubleTypeForBsonDouble() {
         CheckForCorrectColumnDataType(new BsonDouble(0.2), DataType.DT_R8);
     }
 
@@ -45,17 +42,15 @@ public class MongoSourceTests
     ///A test for GetColumnDataType
     ///</summary>
     [TestMethod(), DeploymentItem("MongoSsisDataSource.dll")]
-    public void TestGetColumnDataTypeReturnsDateTypeForBsonDate()
-    {
-        CheckForCorrectColumnDataType( new BsonDateTime(new System.DateTime()), DataType.DT_DATE);
+    public void TestGetColumnDataTypeReturnsDateTypeForBsonDate() {
+        CheckForCorrectColumnDataType(new BsonDateTime(new System.DateTime()), DataType.DT_DATE);
     }
 
     ///<summary>
     ///A test for GetColumnDataType
     ///</summary>
     [TestMethod(), DeploymentItem("MongoSsisDataSource.dll")]
-    public void TestGetColumnDataTypeReturnsDateTypeForBsonString()
-    {
+    public void TestGetColumnDataTypeReturnsDateTypeForBsonString() {
         CheckForCorrectColumnDataType(new BsonString("value"), DataType.DT_STR);
     }
 
@@ -63,13 +58,11 @@ public class MongoSourceTests
     ///A test for GetColumnDataType
     ///</summary>
     [TestMethod(), DeploymentItem("MongoSsisDataSource.dll")]
-    public void TestGetColumnDataTypeReturnsBooleanTypeForBsonBoolean()
-    {
+    public void TestGetColumnDataTypeReturnsBooleanTypeForBsonBoolean() {
         CheckForCorrectColumnDataType(BsonBoolean.True, DataType.DT_BOOL);
     }
 
-    private void CheckForCorrectColumnDataType(BsonValue value, DataType dt)
-    {
+    private void CheckForCorrectColumnDataType(BsonValue value, DataType dt) {
         MongoDataSource_Accessor target = new MongoDataSource_Accessor();
         Assert.AreEqual(dt, target.GetColumnDataType(value));
 
@@ -79,8 +72,7 @@ public class MongoSourceTests
     ///A test for GetDataTypeValueFromBsonValue
     ///</summary>
     [TestMethod(), DeploymentItem("MongoSsisDataSource.dll")]
-    public void GetDataTypeValueFromBsonValueTestWithInt32()
-    {
+    public void GetDataTypeValueFromBsonValueTestWithInt32() {
         Int64 expected = 1234;
         CheckForCorrectDataTypeFromBson(new BsonInt32(1234), DataType.DT_I4, expected);
     }
@@ -89,8 +81,7 @@ public class MongoSourceTests
     ///A test for GetDataTypeValueFromBsonValue
     ///</summary>
     [TestMethod(), DeploymentItem("MongoSsisDataSource.dll")]
-    public void GetDataTypeValueFromBsonValueTestWithInt64()
-    {
+    public void GetDataTypeValueFromBsonValueTestWithInt64() {
         Int64 expected = 1234;
         CheckForCorrectDataTypeFromBson(new BsonInt64(expected), DataType.DT_I8, expected);
     }
@@ -99,8 +90,7 @@ public class MongoSourceTests
     ///A test for GetDataTypeValueFromBsonValue
     ///</summary>
     [TestMethod(), DeploymentItem("MongoSsisDataSource.dll")]
-    public void GetDataTypeValueFromBsonValueTestWithBoolean()
-    {
+    public void GetDataTypeValueFromBsonValueTestWithBoolean() {
         CheckForCorrectDataTypeFromBson(BsonBoolean.True, DataType.DT_BOOL, true);
         CheckForCorrectDataTypeFromBson(BsonBoolean.False, DataType.DT_BOOL, false);
     }
@@ -109,8 +99,7 @@ public class MongoSourceTests
     ///A test for GetDataTypeValueFromBsonValue
     ///</summary>
     [TestMethod(), DeploymentItem("MongoSsisDataSource.dll")]
-    public void GetDataTypeValueFromBsonValueTestWithShortDouble()
-    {
+    public void GetDataTypeValueFromBsonValueTestWithShortDouble() {
         Double expected = 1234.1;
         CheckForCorrectDataTypeFromBson(new BsonDouble(expected), DataType.DT_R4, expected);
     }
@@ -119,8 +108,7 @@ public class MongoSourceTests
     ///A test for GetDataTypeValueFromBsonValue
     ///</summary>
     [TestMethod(), DeploymentItem("MongoSsisDataSource.dll")]
-    public void GetDataTypeValueFromBsonValueTestWithLongDouble()
-    {
+    public void GetDataTypeValueFromBsonValueTestWithLongDouble() {
         Double expected = 1234.1;
         CheckForCorrectDataTypeFromBson(new BsonDouble(expected), DataType.DT_R8, expected);
     }
@@ -129,8 +117,7 @@ public class MongoSourceTests
     ///A test for GetDataTypeValueFromBsonValue
     ///</summary>
     [TestMethod(), DeploymentItem("MongoSsisDataSource.dll")]
-    public void GetDataTypeValueFromBsonValueTestWithString()
-    {
+    public void GetDataTypeValueFromBsonValueTestWithString() {
         String expected = "value";
         CheckForCorrectDataTypeFromBson(new BsonString(expected), DataType.DT_STR, expected);
     }
@@ -139,8 +126,7 @@ public class MongoSourceTests
     ///A test for GetDataTypeValueFromBsonValue
     ///</summary>
     [TestMethod(), DeploymentItem("MongoSsisDataSource.dll")]
-    public void GetDataTypeValueFromBsonValueTestWithDate()
-    {
+    public void GetDataTypeValueFromBsonValueTestWithDate() {
         System.DateTime today = System.DateTime.Today;
         CheckForCorrectDataTypeFromBson(new BsonDateTime(today), DataType.DT_DATE, today);
     }
@@ -149,8 +135,7 @@ public class MongoSourceTests
     ///A test for GetDataTypeValueFromBsonValue
     ///</summary>
     [TestMethod(), DeploymentItem("MongoSsisDataSource.dll")]
-    public void GetDataTypeValueFromBsonValueTestWithDateTimeOffset()
-    {
+    public void GetDataTypeValueFromBsonValueTestWithDateTimeOffset() {
         System.DateTime today = System.DateTime.Today;
         CheckForCorrectDataTypeFromBson(new BsonDateTime(today), DataType.DT_DBTIMESTAMPOFFSET, today);
     }
@@ -159,14 +144,12 @@ public class MongoSourceTests
     ///A test for GetDataTypeValueFromBsonValue
     ///</summary>
     [TestMethod(), DeploymentItem("MongoSsisDataSource.dll")]
-    public void GetDataTypeValueFromBsonValueTestWithDateTime()
-    {
+    public void GetDataTypeValueFromBsonValueTestWithDateTime() {
         System.DateTime today = System.DateTime.Today;
         CheckForCorrectDataTypeFromBson(new BsonDateTime(today), DataType.DT_DBTIMESTAMP, today);
     }
 
-    private void CheckForCorrectDataTypeFromBson(BsonValue bsonValue, DataType dataType, object expectedValue)
-    {
+    private void CheckForCorrectDataTypeFromBson(BsonValue bsonValue, DataType dataType, object expectedValue) {
         MongoDataSource_Accessor target = new MongoDataSource_Accessor();
 
         object actual = target.GetDataTypeValueFromBsonValue(bsonValue, dataType);
@@ -177,8 +160,7 @@ public class MongoSourceTests
     ///A test for BuildOutputColumn
     ///</summary>
     [TestMethod(), DeploymentItem("MongoSsisDataSource.dll")]
-    public void TestBuildBooleanOutputColumn()
-    {
+    public void TestBuildBooleanOutputColumn() {
         TestBuildOutputColumn("elname", BsonBoolean.True, DataType.DT_BOOL, 0, 0);
     }
 
@@ -186,8 +168,7 @@ public class MongoSourceTests
     ///A test for BuildOutputColumn
     ///</summary>
     [TestMethod(), DeploymentItem("MongoSsisDataSource.dll")]
-    public void TestBuildIntegerOutputColumn()
-    {
+    public void TestBuildIntegerOutputColumn() {
         TestBuildOutputColumn("elname", new BsonInt64(123), DataType.DT_I8, 0, 0);
     }
 
@@ -195,8 +176,7 @@ public class MongoSourceTests
     ///A test for BuildOutputColumn
     ///</summary>
     [TestMethod(), DeploymentItem("MongoSsisDataSource.dll")]
-    public void TestBuildDoubleOutputColumn()
-    {
+    public void TestBuildDoubleOutputColumn() {
         TestBuildOutputColumn("elname", new BsonDouble(12.3), DataType.DT_R8, 0, 0);
     }
 
@@ -204,22 +184,19 @@ public class MongoSourceTests
     ///A test for BuildOutputColumn
     ///</summary>
     [TestMethod(), DeploymentItem("MongoSsisDataSource.dll")]
-    public void TestBuildDateOutputColumn()
-    {
-        TestBuildOutputColumn("elname", new BsonDateTime(DateTime.Now), DataType.DT_DATE, 0,0);
+    public void TestBuildDateOutputColumn() {
+        TestBuildOutputColumn("elname", new BsonDateTime(DateTime.Now), DataType.DT_DATE, 0, 0);
     }
 
     ///<summary>
     ///A test for BuildOutputColumn
     ///</summary>
     [TestMethod(), DeploymentItem("MongoSsisDataSource.dll")]
-    public void TestBuildStringOutputColumn()
-    {
-        TestBuildOutputColumn("elname", new BsonString("value"), DataType.DT_STR, 256,1252);
+    public void TestBuildStringOutputColumn() {
+        TestBuildOutputColumn("elname", new BsonString("value"), DataType.DT_STR, 256, 1252);
     }
 
-    public void TestBuildOutputColumn(String elementname, BsonValue bsonValue, DataType expectedDataType, int length, int codepage)
-    {
+    public void TestBuildOutputColumn(String elementname, BsonValue bsonValue, DataType expectedDataType, int length, int codepage) {
         MongoDataSource_Accessor target = new MongoDataSource_Accessor();
 
         IDTSOutputColumnCollection100 outputCollection = Mock.Create<IDTSOutputColumnCollection100>(Constructor.Mocked);
@@ -241,8 +218,7 @@ public class MongoSourceTests
     ///A test for ReleaseConnections
     ///</summary>
     [TestMethod()]
-    public void TestReleaseConnectionsDelegatesToConnectionManager()
-    {
+    public void TestReleaseConnectionsDelegatesToConnectionManager() {
         MongoDataSource_Accessor target = new MongoDataSource_Accessor();
 
         IDTSConnectionManager100 connManager = Mock.Create<IDTSConnectionManager100>(Constructor.Mocked);
@@ -261,8 +237,7 @@ public class MongoSourceTests
     ///</summary>
     [TestMethod()]
     [DeploymentItem("MongoSsisDataSource.dll")]
-    public void PopulateExternalMetadataColumnTest()
-    {
+    public void PopulateExternalMetadataColumnTest() {
         MongoDataSource_Accessor target = new MongoDataSource_Accessor();
         IDTSOutputColumn100 outputColumn = Mock.Create<IDTSOutputColumn100>(Constructor.Mocked);
 

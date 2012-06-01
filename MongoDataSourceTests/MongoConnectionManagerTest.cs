@@ -16,15 +16,13 @@ using Telerik.JustMock;
 ///to contain all MongoConnectionManagerTest Unit Tests
 ///</summary>
 [TestClass()]
-public class MongoConnectionManagerTest
-{
+public class MongoConnectionManagerTest {
 
     ///<summary>
     ///A test for AcquireConnection
     ///</summary>
     [TestMethod()]
-    public void AcquireConnectionTest()
-    {
+    public void AcquireConnectionTest() {
         Assert.Inconclusive("Can't test static calls (with current mocking framework - JustMock), so can't test this method");
     }
 
@@ -32,16 +30,15 @@ public class MongoConnectionManagerTest
     ///A test for ReleaseConnection
     ///</summary>
     [TestMethod()]
-    public void ReleaseConnectionTest()
-    {
+    public void ReleaseConnectionTest() {
         MongoConnectionManager target = new MongoConnectionManager();
 
         MongoServer server = Mock.Create<MongoServer>(Constructor.Mocked);
 
         MongoDatabaseSettings dbSettings = Mock.Create<MongoDatabaseSettings>(Constructor.Mocked);
         MongoDatabase connection = Mock.Create<MongoDatabase>(Constructor.Mocked);
-        
-        Mock.Arrange(() => connection.Server).Returns(server);   
+
+        Mock.Arrange(() => connection.Server).Returns(server);
 
         target.ReleaseConnection(connection);
 
@@ -52,8 +49,7 @@ public class MongoConnectionManagerTest
     ///A test for UpdateConnectionString
     ///</summary>
     [TestMethod(), DeploymentItem("MongoSsisDataSource.dll")]
-    public void UpdateConnectionStringTest()
-    {
+    public void UpdateConnectionStringTest() {
         MongoConnectionManager_Accessor target = new MongoConnectionManager_Accessor();
         target._serverName = "db1";
         target._password = "pass1";
@@ -66,8 +62,7 @@ public class MongoConnectionManagerTest
     ///A test for Validate
     ///</summary>
     [TestMethod()]
-    public void ValidateReturnsSuccessIfServerNameSpecifiedTest()
-    {
+    public void ValidateReturnsSuccessIfServerNameSpecifiedTest() {
         MongoConnectionManager target = new MongoConnectionManager();
         target.ServerName = "server123";
         IDTSInfoEvents infoEvents = null;
@@ -81,8 +76,7 @@ public class MongoConnectionManagerTest
     ///A test for Validate
     ///</summary>
     [TestMethod()]
-    public void ValidateReturnsFailureIfServerNameEmptyTest()
-    {
+    public void ValidateReturnsFailureIfServerNameEmptyTest() {
         MongoConnectionManager target = new MongoConnectionManager();
         target.ServerName = "";
         IDTSInfoEvents infoEvents = null;
@@ -96,8 +90,7 @@ public class MongoConnectionManagerTest
     ///A test for ConnectionString
     ///</summary>
     [TestMethod()]
-    public void ConnectionStringTest()
-    {
+    public void ConnectionStringTest() {
         MongoConnectionManager target = new MongoConnectionManager();
         string user = "user1";
         string pwd = "pwd1";
@@ -115,8 +108,7 @@ public class MongoConnectionManagerTest
     ///A test for DatabaseName
     ///</summary>
     [TestMethod()]
-    public void DatabaseNameTest()
-    {
+    public void DatabaseNameTest() {
         MongoConnectionManager target = new MongoConnectionManager();
         string expected = "db1";
         string actual = null;
@@ -129,8 +121,7 @@ public class MongoConnectionManagerTest
     ///A test for Password
     ///</summary>
     [TestMethod()]
-    public void PasswordTest()
-    {
+    public void PasswordTest() {
         MongoConnectionManager target = new MongoConnectionManager();
         string expected = "pwd123";
         string actual = null;
@@ -143,8 +134,7 @@ public class MongoConnectionManagerTest
     ///A test for ServerName
     ///</summary>
     [TestMethod()]
-    public void ServerNameTest()
-    {
+    public void ServerNameTest() {
         MongoConnectionManager target = new MongoConnectionManager();
         string expected = "server123";
         string actual = null;
@@ -157,8 +147,7 @@ public class MongoConnectionManagerTest
     ///A test for ServerName
     ///</summary>
     [TestMethod()]
-    public void ServerNameIsLocalhostByDefaultTest()
-    {
+    public void ServerNameIsLocalhostByDefaultTest() {
         MongoConnectionManager target = new MongoConnectionManager();
         string actual = null;
         actual = target.ServerName;
@@ -169,8 +158,7 @@ public class MongoConnectionManagerTest
     ///A test for UserName
     ///</summary>
     [TestMethod()]
-    public void UserNameTest()
-    {
+    public void UserNameTest() {
         MongoConnectionManager target = new MongoConnectionManager();
         string expected = "user123";
         string actual = null;
