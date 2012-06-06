@@ -9,6 +9,7 @@ using Microsoft.SqlServer.Dts.Pipeline;
 using Microsoft.SqlServer.Dts.Pipeline.Wrapper;
 using Microsoft.SqlServer.Dts.Runtime.Wrapper;
 using MongoDB.Driver;
+using MongoDB.Driver.Builders;
 using MongoDB.Bson;
 
 
@@ -203,7 +204,11 @@ namespace MongoDataSource {
 
             ComponentMetaData.FireInformation(0, "MongoDataSource", "processing collection " + collectionNameProp.Value, String.Empty, 0, false);
 
-            foreach (BsonDocument document in database.GetCollection(collectionNameProp.Value).FindAll()) {
+            var collection = database.GetCollection(collectionNameProp.Value);
+
+            var cursor = GetCollectionCursor(collection);
+
+            foreach (BsonDocument document in cursor) {
 
                 buffer.AddRow();
                 for (int x = 0; x <= columnInformation.Count - 1; x++) {
@@ -226,6 +231,29 @@ namespace MongoDataSource {
             }
 
             buffer.SetEndOfRowset();
+        }
+
+        private dynamic GetCollectionCursor(dynamic collection) {
+            /*IDTSCustomProperty100 conditionalFieldProp = ComponentMetaData.CustomPropertyCollection[CONDITIONAL_FIELD_PROP_NAME];
+            if (conditionalFieldProp != null) {
+                IDTSCustomProperty100 fromValue = ComponentMetaData.CustomPropertyCollection[CONDITION_FROM_PROP_NAME];
+                IDTSCustomProperty100 toValueProp = ComponentMetaData.CustomPropertyCollection[CONDITION_TO_PROP_NAME];
+
+                var fromQuery = Query.GT(conditionalFieldProp.Value,fromValue.Value);
+
+                return null;
+            } else {
+                return collection.FindAll();
+            }*/
+            return collection.FindAll();
+        }
+
+        private IMongoQuery BuildQuery(IDTSCustomProperty100 condFieldProp,IDTSCustomProperty100 fromProp,IDTSCustomProperty100 toProp) {
+
+            var fromQuery = Query.GT(condFieldProp.Value,fromProp.Value);
+            var toQuery = Query.LT(condFieldProp.Value, toProp.Value);
+
+            return Query.And(fromQuery,toQuery);
         }
 
         private object GetValue(BsonDocument document, ColumnInfo ci) {
