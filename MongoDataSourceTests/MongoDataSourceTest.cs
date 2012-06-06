@@ -265,4 +265,48 @@ public class MongoSourceTests {
 
         Mock.Assert(expected);
     }
+
+    /// <summary>
+    ///A test for CollectionName
+    ///</summary>
+    [TestMethod()]
+    public void CollectionNameTest() {
+        MongoDataSource.MongoDataSource target = new MongoDataSource.MongoDataSource();
+        string expected = "collection1";
+        target.CollectionName = expected;
+        Assert.AreEqual(expected, target.CollectionName);
+    }
+
+    /// <summary>
+    ///A test for ConditionalFieldName
+    ///</summary>
+    [TestMethod()]
+    public void ConditionalFieldNameTest() {
+        MongoDataSource.MongoDataSource target = new MongoDataSource.MongoDataSource();
+        string expected = "field1";
+        target.ConditionalFieldName = expected;
+        Assert.AreEqual(expected, target.ConditionalFieldName);
+    }
+
+    /// <summary>
+    ///A test for ConditionFromValue
+    ///</summary>
+    [TestMethod()]
+    public void ConditionFromValueTest() {
+        MongoDataSource.MongoDataSource target = new MongoDataSource.MongoDataSource();
+        string expected = "from1";
+        target.ConditionFromValue = expected;
+        Assert.AreEqual(expected, target.ConditionFromValue);
+    }
+
+    /// <summary>
+    ///A test for ConditionFromValue
+    ///</summary>
+    [TestMethod()]
+    public void ConditionToValueTest() {
+        MongoDataSource.MongoDataSource target = new MongoDataSource.MongoDataSource();
+        string expected = "to1";
+        target.ConditionToValue = expected;
+        Assert.AreEqual(expected, target.ConditionToValue);
+    }
 }

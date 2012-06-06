@@ -20,11 +20,29 @@ namespace MongoDataSource {
         private IDTSConnectionManager100 m_ConnMgr;
         private ArrayList columnInformation;
         private string _collectionName = string.Empty;
+        private string _conditionalFieldName = string.Empty;
         private MongoDatabase database;
+        private string _conditionFromValue;
+        private string _conditionToValue;
 
         public string CollectionName {
             get { return _collectionName; }
             set { _collectionName = value; }
+        }
+
+        public string ConditionalFieldName {
+            get { return _conditionalFieldName; }
+            set { _conditionalFieldName = value; }
+        }
+
+        public string ConditionFromValue {
+            get { return _conditionFromValue; }
+            set { _conditionFromValue = value; }
+        }
+
+        public string ConditionToValue {
+            get { return _conditionToValue; }
+            set { _conditionToValue = value; }
         }
 
         public override void ProvideComponentProperties() {
@@ -83,7 +101,6 @@ namespace MongoDataSource {
             if (database == null) {
                 AcquireConnections(null);
             }
-
 
             MongoCollection<BsonDocument> collection = database.GetCollection(collectionName);
 
