@@ -239,6 +239,7 @@ public class MongoSourceTests {
     [DeploymentItem("MongoSsisDataSource.dll")]
     public void PopulateExternalMetadataColumnTest() {
         MongoDataSource_Accessor target = new MongoDataSource_Accessor();
+
         IDTSOutputColumn100 outputColumn = Mock.Create<IDTSOutputColumn100>(Constructor.Mocked);
 
         String expectedName = "name";
@@ -267,46 +268,45 @@ public class MongoSourceTests {
     }
 
     /// <summary>
-    ///A test for CollectionName
+    ///A test for AddCustomProperties
     ///</summary>
     [TestMethod()]
-    public void CollectionNameTest() {
-        MongoDataSource.MongoDataSource target = new MongoDataSource.MongoDataSource();
-        string expected = "collection1";
-        target.CollectionName = expected;
-        Assert.AreEqual(expected, target.CollectionName);
-    }
+    [DeploymentItem("MongoSsisDataSource.dll")]
+    public void AddCustomPropertiesTest() {
+        MongoDataSource_Accessor target = new MongoDataSource_Accessor(); 
+        IDTSCustomPropertyCollection100 customPropertyCollection = Mock.Create<IDTSCustomPropertyCollection100>();
 
-    /// <summary>
-    ///A test for ConditionalFieldName
-    ///</summary>
-    [TestMethod()]
-    public void ConditionalFieldNameTest() {
-        MongoDataSource.MongoDataSource target = new MongoDataSource.MongoDataSource();
-        string expected = "field1";
-        target.ConditionalFieldName = expected;
-        Assert.AreEqual(expected, target.ConditionalFieldName);
-    }
+        IDTSCustomProperty100 collectionNameProp = Mock.Create<IDTSCustomProperty100>();
+        IDTSCustomProperty100 conditionalFieldProp = Mock.Create<IDTSCustomProperty100>();
+        IDTSCustomProperty100 fromValueProp = Mock.Create<IDTSCustomProperty100>();
+        IDTSCustomProperty100 toValueProp = Mock.Create<IDTSCustomProperty100>();
 
-    /// <summary>
-    ///A test for ConditionFromValue
-    ///</summary>
-    [TestMethod()]
-    public void ConditionFromValueTest() {
-        MongoDataSource.MongoDataSource target = new MongoDataSource.MongoDataSource();
-        string expected = "from1";
-        target.ConditionFromValue = expected;
-        Assert.AreEqual(expected, target.ConditionFromValue);
-    }
+        Mock.Arrange(() => customPropertyCollection.New()).Returns(collectionNameProp).InSequence();
+        Mock.Arrange(() => customPropertyCollection.New()).Returns(conditionalFieldProp).InSequence();
+        Mock.Arrange(() => customPropertyCollection.New()).Returns(fromValueProp).InSequence();
+        Mock.Arrange(() => customPropertyCollection.New()).Returns(toValueProp).InSequence();
 
-    /// <summary>
-    ///A test for ConditionFromValue
-    ///</summary>
-    [TestMethod()]
-    public void ConditionToValueTest() {
-        MongoDataSource.MongoDataSource target = new MongoDataSource.MongoDataSource();
-        string expected = "to1";
-        target.ConditionToValue = expected;
-        Assert.AreEqual(expected, target.ConditionToValue);
+        Mock.ArrangeSet(() => collectionNameProp.Name = Arg.Matches<String>(x => x == MongoDataSource_Accessor.COLLECTION_NAME_PROP_NAME)).OccursOnce();
+        Mock.ArrangeSet(() => collectionNameProp.Description = Arg.IsAny<String>()).OccursOnce();
+
+        Mock.ArrangeSet(() => conditionalFieldProp.Name = Arg.Matches<String>(x => x == MongoDataSource_Accessor.CONDITIONAL_FIELD_PROP_NAME)).OccursOnce();
+        Mock.ArrangeSet(() => conditionalFieldProp.Description = Arg.IsAny<String>()).OccursOnce();
+
+        Mock.ArrangeSet(() => fromValueProp.Name = Arg.Matches<String>(x => x == MongoDataSource_Accessor.CONDITION_FROM_PROP_NAME)).OccursOnce();
+        Mock.ArrangeSet(() => fromValueProp.Description = Arg.IsAny<String>()).OccursOnce();
+
+        Mock.ArrangeSet(() => toValueProp.Name = Arg.Matches<String>(x => x == MongoDataSource_Accessor.CONDITION_TO_PROP_NAME)).OccursOnce();
+        Mock.ArrangeSet(() => toValueProp.Description = Arg.IsAny<String>()).OccursOnce();
+
+
+        target.AddCustomProperties(customPropertyCollection);
+
+        Mock.Assert(() => customPropertyCollection.New(), Occurs.Exactly(4));
+
+        Mock.Assert(collectionNameProp);
+        Mock.Assert(conditionalFieldProp);
+        Mock.Assert(fromValueProp);
+        Mock.Assert(toValueProp);
     }
 }
+

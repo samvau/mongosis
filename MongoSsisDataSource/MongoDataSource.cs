@@ -17,40 +17,20 @@ namespace MongoDataSource {
     [DtsPipelineComponent(DisplayName = "MongoDB Data Source", Description = "Loads data from a MongoDB data source", ComponentType = ComponentType.SourceAdapter)]
     public class MongoDataSource : PipelineComponent {
 
+        private static string COLLECTION_NAME_PROP_NAME = "CollectionName";
+        private static string CONDITIONAL_FIELD_PROP_NAME = "ConditionalFieldName";
+        private static string CONDITION_FROM_PROP_NAME = "ConditionFromValue";
+        private static string CONDITION_TO_PROP_NAME = "ConditionToValue";
         private IDTSConnectionManager100 m_ConnMgr;
         private ArrayList columnInformation;
-        private string _collectionName = string.Empty;
-        private string _conditionalFieldName = string.Empty;
         private MongoDatabase database;
-        private string _conditionFromValue;
-        private string _conditionToValue;
-
-        public string CollectionName {
-            get { return _collectionName; }
-            set { _collectionName = value; }
-        }
-
-        public string ConditionalFieldName {
-            get { return _conditionalFieldName; }
-            set { _conditionalFieldName = value; }
-        }
-
-        public string ConditionFromValue {
-            get { return _conditionFromValue; }
-            set { _conditionFromValue = value; }
-        }
-
-        public string ConditionToValue {
-            get { return _conditionToValue; }
-            set { _conditionToValue = value; }
-        }
 
         public override void ProvideComponentProperties() {
             // Allow for resetting the component.
             RemoveAllInputsOutputsAndCustomProperties();
             ComponentMetaData.RuntimeConnectionCollection.RemoveAll();
-            dynamic customProperty = ComponentMetaData.CustomPropertyCollection.New();
-            customProperty.Name = "CollectionName";
+
+            AddCustomProperties(ComponentMetaData.CustomPropertyCollection);
 
             IDTSOutput100 output = ComponentMetaData.OutputCollection.New();
             output.Name = "Output";
@@ -59,10 +39,32 @@ namespace MongoDataSource {
             conn.Name = "MongoDB";
         }
 
+        private void AddCustomProperties(IDTSCustomPropertyCollection100 customPropertyCollection) {
+            IDTSCustomProperty100 customProperty = customPropertyCollection.New();
+            customProperty.Name = COLLECTION_NAME_PROP_NAME;
+            customProperty.Description = "Name of collection to import data from";
+
+            customProperty = customPropertyCollection.New();
+            customProperty.Description = "Field name for conditional query";
+            customProperty.Name = CONDITIONAL_FIELD_PROP_NAME;
+            
+            customProperty = customPropertyCollection.New();
+            customProperty.Description = "From value for conditional query";
+            customProperty.Name = CONDITION_FROM_PROP_NAME;
+            
+            customProperty = customPropertyCollection.New();
+            customProperty.Description = "To value for conditional query";
+            customProperty.Name = CONDITION_TO_PROP_NAME;
+        }
+
+        private IDTSCustomPropertyCollection100 GetCustomPropertyCollection() {
+            return ComponentMetaData.CustomPropertyCollection;
+        }
+
         public override Microsoft.SqlServer.Dts.Pipeline.Wrapper.IDTSCustomProperty100 SetComponentProperty(string propertyName, object propertyValue) {
             if (propertyName.Equals("CollectionName")) {
-                _collectionName = Convert.ToString(propertyValue);
-                CreateColumnsFromMongoDb(_collectionName);
+                string collectionName = Convert.ToString(propertyValue);
+                CreateColumnsFromMongoDb(collectionName);
             }
             return base.SetComponentProperty(propertyName, propertyValue);
         }
@@ -189,7 +191,7 @@ namespace MongoDataSource {
         public override void PrimeOutput(int outputs, int[] outputIDs, PipelineBuffer[] buffers) {
             IDTSOutput100 output = ComponentMetaData.OutputCollection[0];
             PipelineBuffer buffer = buffers[0];
-            IDTSCustomProperty100 collectionNameProp = ComponentMetaData.CustomPropertyCollection[0];
+            IDTSCustomProperty100 collectionNameProp = ComponentMetaData.CustomPropertyCollection[COLLECTION_NAME_PROP_NAME];
 
             if (database == null) {
                 AcquireConnections(null);
