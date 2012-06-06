@@ -286,18 +286,10 @@ public class MongoSourceTests {
         Mock.Arrange(() => customPropertyCollection.New()).Returns(fromValueProp).InSequence();
         Mock.Arrange(() => customPropertyCollection.New()).Returns(toValueProp).InSequence();
 
-        Mock.ArrangeSet(() => collectionNameProp.Name = Arg.Matches<String>(x => x == MongoDataSource_Accessor.COLLECTION_NAME_PROP_NAME)).OccursOnce();
-        Mock.ArrangeSet(() => collectionNameProp.Description = Arg.IsAny<String>()).OccursOnce();
-
-        Mock.ArrangeSet(() => conditionalFieldProp.Name = Arg.Matches<String>(x => x == MongoDataSource_Accessor.CONDITIONAL_FIELD_PROP_NAME)).OccursOnce();
-        Mock.ArrangeSet(() => conditionalFieldProp.Description = Arg.IsAny<String>()).OccursOnce();
-
-        Mock.ArrangeSet(() => fromValueProp.Name = Arg.Matches<String>(x => x == MongoDataSource_Accessor.CONDITION_FROM_PROP_NAME)).OccursOnce();
-        Mock.ArrangeSet(() => fromValueProp.Description = Arg.IsAny<String>()).OccursOnce();
-
-        Mock.ArrangeSet(() => toValueProp.Name = Arg.Matches<String>(x => x == MongoDataSource_Accessor.CONDITION_TO_PROP_NAME)).OccursOnce();
-        Mock.ArrangeSet(() => toValueProp.Description = Arg.IsAny<String>()).OccursOnce();
-
+        assertSetPropertyNameAndDescription(collectionNameProp, MongoDataSource_Accessor.COLLECTION_NAME_PROP_NAME);
+        assertSetPropertyNameAndDescription(conditionalFieldProp, MongoDataSource_Accessor.CONDITIONAL_FIELD_PROP_NAME);
+        assertSetPropertyNameAndDescription(fromValueProp, MongoDataSource_Accessor.CONDITION_FROM_PROP_NAME);
+        assertSetPropertyNameAndDescription(toValueProp, MongoDataSource_Accessor.CONDITION_TO_PROP_NAME);
 
         target.AddCustomProperties(customPropertyCollection);
 
@@ -307,6 +299,11 @@ public class MongoSourceTests {
         Mock.Assert(conditionalFieldProp);
         Mock.Assert(fromValueProp);
         Mock.Assert(toValueProp);
+    }
+
+    private void assertSetPropertyNameAndDescription(IDTSCustomProperty100 propMock, String propName) {
+        Mock.ArrangeSet(() => propMock.Name = Arg.Matches<String>(x => x == propName)).OccursOnce();
+        Mock.ArrangeSet(() => propMock.Description = Arg.IsAny<String>()).OccursOnce();
     }
 }
 
