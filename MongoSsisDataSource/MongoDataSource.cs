@@ -271,6 +271,23 @@ namespace MongoDataSource {
             return finalQuery;
         }
 
+        private object ParseConditionValue(String value, DataType dt) {
+            object parsedValue = null;
+
+            if (dt == DataType.DT_DATE) {
+                if ("now".Equals(value, StringComparison.CurrentCultureIgnoreCase) ||
+                    "today".Equals(value,StringComparison.CurrentCultureIgnoreCase)) {
+                    parsedValue = DateTime.Now;
+                } else if("yesterday".Equals(value,StringComparison.CurrentCultureIgnoreCase)) {
+                    parsedValue = DateTime.Now.AddDays(-1);
+                } else {
+                    parsedValue = DateTime.Parse(value);
+                }
+            }
+            
+            return parsedValue;
+        }
+
         private object GetValue(BsonDocument document, ColumnInfo ci) {
             BsonValue value = document.GetValue(ci.ColumnName);
 

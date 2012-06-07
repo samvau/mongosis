@@ -378,5 +378,68 @@ public class MongoSourceTests {
         Assert.AreEqual("{ \"" + fieldName + "\" : { \"$lt\" : \"" + toVal + "\" } }", query.ToString());
     }
 
+    /// <summary>
+    ///A test for ParseConditionValue
+    ///</summary>
+    [TestMethod()]
+    [DeploymentItem("MongoSsisDataSource.dll")]
+    public void ParseConditionValueForSimpleDateTest() {
+        MongoDataSource_Accessor target = new MongoDataSource_Accessor();
+
+        String value = "12/12/2012";
+        DataType dt = DataType.DT_DATE;
+
+        object parsedValue = target.ParseConditionValue(value, dt);
+
+        Assert.AreEqual(DateTime.Parse(value),parsedValue);
+    }
+
+    /// <summary>
+    ///A test for ParseConditionValue
+    ///</summary>
+    [TestMethod()]
+    [DeploymentItem("MongoSsisDataSource.dll")]
+    public void ParseConditionValueForNowTest() {
+        MongoDataSource_Accessor target = new MongoDataSource_Accessor();
+
+        String value = "now";
+        DataType dt = DataType.DT_DATE;
+
+        object parsedValue = target.ParseConditionValue(value, dt);
+
+        Assert.AreEqual(DateTime.Now, parsedValue);
+    }
+
+    /// <summary>
+    ///A test for ParseConditionValue
+    ///</summary>
+    [TestMethod()]
+    [DeploymentItem("MongoSsisDataSource.dll")]
+    public void ParseConditionValueForTodayTest() {
+        MongoDataSource_Accessor target = new MongoDataSource_Accessor();
+
+        String value = "today";
+        DataType dt = DataType.DT_DATE;
+
+        object parsedValue = target.ParseConditionValue(value, dt);
+
+        Assert.AreEqual(DateTime.Now, parsedValue);
+    }
+
+    /// <summary>
+    ///A test for ParseConditionValue
+    ///</summary>
+    [TestMethod()]
+    public void ParseConditionValueForYesterdayTest() {
+        MongoDataSource_Accessor target = new MongoDataSource_Accessor();
+
+        String value = "yesterday";
+        DataType dt = DataType.DT_DATE;
+
+        object parsedValue = target.ParseConditionValue(value, dt);
+
+        Assert.AreEqual(DateTime.Now.AddDays(-1), parsedValue);
+    }
+
 }
 
