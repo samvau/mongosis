@@ -91,13 +91,11 @@ namespace MongoDataSource {
             }
         }
 
-
         public override void SetOutputColumnDataTypeProperties(int iOutputID, int iOutputColumnID, Microsoft.SqlServer.Dts.Runtime.Wrapper.DataType eDataType, int iLength, int iPrecision, int iScale, int iCodePage) {
             IDTSOutputColumn100 outColumn = ComponentMetaData.OutputCollection[0].OutputColumnCollection.GetObjectByID(iOutputColumnID);
 
             outColumn.SetDataTypeProperties(eDataType, iLength, iPrecision, iScale, iCodePage);
         }
-
 
         private void CreateColumnsFromMongoDb(string collectionName) {
             // Get the output.
@@ -179,11 +177,9 @@ namespace MongoDataSource {
             return dt;
         }
 
-
         public override void PreExecute() {
             this.columnInformation = new ArrayList();
             IDTSOutput100 output = ComponentMetaData.OutputCollection[0];
-
 
             foreach (IDTSOutputColumn100 col in output.OutputColumnCollection) {
                 ColumnInfo ci = new ColumnInfo();
@@ -358,10 +354,8 @@ namespace MongoDataSource {
     }
 
     internal class ColumnInfo {
-
         internal int BufferColumnIndex;
         internal string ColumnName;
         internal DataType ColumnDataType;
     }
-
 }

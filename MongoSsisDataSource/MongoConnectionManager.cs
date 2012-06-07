@@ -48,7 +48,6 @@ namespace MongoDataSource {
             set { _connectionString = value; }
         }
 
-
         private void UpdateConnectionString() {
             string temporaryString = CONNECTIONSTRING_TEMPLATE;
 
@@ -109,7 +108,6 @@ namespace MongoDataSource {
 
             return database;
         }
-
 
         public override void ReleaseConnection(object connection) {
             if (connection != null) {
