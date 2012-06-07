@@ -387,9 +387,8 @@ public class MongoSourceTests {
         MongoDataSource_Accessor target = new MongoDataSource_Accessor();
 
         String value = "12/12/2012";
-        DataType dt = DataType.DT_DATE;
 
-        object parsedValue = target.ParseConditionValue(value, dt);
+        object parsedValue = target.ParseConditionValue(value, DataType.DT_DATE);
 
         Assert.AreEqual(DateTime.Parse(value),parsedValue);
     }
@@ -403,9 +402,8 @@ public class MongoSourceTests {
         MongoDataSource_Accessor target = new MongoDataSource_Accessor();
 
         String value = "now";
-        DataType dt = DataType.DT_DATE;
 
-        object parsedValue = target.ParseConditionValue(value, dt);
+        object parsedValue = target.ParseConditionValue(value, DataType.DT_DATE);
 
         Assert.AreEqual(DateTime.Now, parsedValue);
     }
@@ -419,9 +417,8 @@ public class MongoSourceTests {
         MongoDataSource_Accessor target = new MongoDataSource_Accessor();
 
         String value = "today";
-        DataType dt = DataType.DT_DATE;
 
-        object parsedValue = target.ParseConditionValue(value, dt);
+        object parsedValue = target.ParseConditionValue(value, DataType.DT_DATE);
 
         Assert.AreEqual(DateTime.Now, parsedValue);
     }
@@ -434,11 +431,57 @@ public class MongoSourceTests {
         MongoDataSource_Accessor target = new MongoDataSource_Accessor();
 
         String value = "yesterday";
-        DataType dt = DataType.DT_DATE;
 
-        object parsedValue = target.ParseConditionValue(value, dt);
+        object parsedValue = target.ParseConditionValue(value, DataType.DT_DATE);
 
         Assert.AreEqual(DateTime.Now.AddDays(-1), parsedValue);
+    }
+
+    /// <summary>
+    ///A test for ParseConditionValue
+    ///</summary>
+    [TestMethod()]
+    public void ParseConditionValueForIntTest() {
+        MongoDataSource_Accessor target = new MongoDataSource_Accessor();
+
+        string value = "123";
+        object parsedValue = target.ParseConditionValue(value, DataType.DT_I8);
+
+        Assert.AreEqual(Int64.Parse(value), parsedValue);
+
+        parsedValue = target.ParseConditionValue(value, DataType.DT_I4);
+
+        Assert.AreEqual(Int64.Parse(value), parsedValue);
+    }
+
+    /// <summary>
+    ///A test for ParseConditionValue
+    ///</summary>
+    [TestMethod()]
+    public void ParseConditionValueForStringTest() {
+        MongoDataSource_Accessor target = new MongoDataSource_Accessor();
+
+        string value = "blah";
+        object parsedValue = target.ParseConditionValue(value, DataType.DT_STR);
+
+        Assert.AreEqual(value, parsedValue);
+    }
+
+    /// <summary>
+    ///A test for ParseConditionValue
+    ///</summary>
+    [TestMethod()]
+    public void ParseConditionValueForDoubleTest() {
+        MongoDataSource_Accessor target = new MongoDataSource_Accessor();
+
+        string value = "12.34";
+        object parsedValue = target.ParseConditionValue(value, DataType.DT_R8);
+
+        Assert.AreEqual(Double.Parse(value), parsedValue);
+
+        parsedValue = target.ParseConditionValue(value, DataType.DT_R4);
+
+        Assert.AreEqual(Double.Parse(value), parsedValue);
     }
 
 }

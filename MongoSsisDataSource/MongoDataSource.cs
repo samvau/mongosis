@@ -272,9 +272,9 @@ namespace MongoDataSource {
         }
 
         private object ParseConditionValue(String value, DataType dt) {
-            object parsedValue = null;
+            object parsedValue = value;
 
-            if (dt == DataType.DT_DATE) {
+            if (dt == DataType.DT_DATE | dt == DataType.DT_DBTIMESTAMPOFFSET | dt == DataType.DT_DBTIMESTAMP) {
                 if ("now".Equals(value, StringComparison.CurrentCultureIgnoreCase) ||
                     "today".Equals(value,StringComparison.CurrentCultureIgnoreCase)) {
                     parsedValue = DateTime.Now;
@@ -283,6 +283,10 @@ namespace MongoDataSource {
                 } else {
                     parsedValue = DateTime.Parse(value);
                 }
+            } else if (dt == DataType.DT_I8 || dt == DataType.DT_I4) {
+                parsedValue = Int64.Parse(value);
+            } else if (dt == DataType.DT_R8 || dt == DataType.DT_R4) {
+                parsedValue = Double.Parse(value);
             }
             
             return parsedValue;
