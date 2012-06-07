@@ -254,10 +254,10 @@ namespace MongoDataSource {
             IMongoQuery toQuery = null;
 
             if (!String.IsNullOrEmpty(fromProp.Value)) {
-                fromQuery = Query.GT(condFieldProp.Value, fromProp.Value);
+                fromQuery = Query.GTE(condFieldProp.Value, fromProp.Value);
             }
             if (!String.IsNullOrEmpty(toProp.Value)) {
-                toQuery = Query.LT(condFieldProp.Value, toProp.Value);
+                toQuery = Query.LTE(condFieldProp.Value, toProp.Value);
             }
 
             if (fromQuery != null && toQuery != null) {

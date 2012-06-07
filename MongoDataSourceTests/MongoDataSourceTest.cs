@@ -327,7 +327,7 @@ public class MongoSourceTests {
 
         IMongoQuery query = target.BuildQuery(condFieldProp,fromProp,toProp);
 
-        Assert.AreEqual("{ \"" + fieldName + "\" : { \"$gt\" : \"" + fromVal + "\", \"$lt\" : \"" + toVal + "\" } }", query.ToString());
+        Assert.AreEqual("{ \"" + fieldName + "\" : { \"$gte\" : \"" + fromVal + "\", \"$lte\" : \"" + toVal + "\" } }", query.ToString());
     }
 
     /// <summary>
@@ -351,7 +351,7 @@ public class MongoSourceTests {
 
         IMongoQuery query = target.BuildQuery(condFieldProp, fromProp, toProp);
 
-        Assert.AreEqual("{ \"" + fieldName + "\" : { \"$gt\" : \"" + fromVal + "\" } }", query.ToString());
+        Assert.AreEqual("{ \"" + fieldName + "\" : { \"$gte\" : \"" + fromVal + "\" } }", query.ToString());
     }
 
     /// <summary>
@@ -375,7 +375,7 @@ public class MongoSourceTests {
 
         IMongoQuery query = target.BuildQuery(condFieldProp, fromProp, toProp);
 
-        Assert.AreEqual("{ \"" + fieldName + "\" : { \"$lt\" : \"" + toVal + "\" } }", query.ToString());
+        Assert.AreEqual("{ \"" + fieldName + "\" : { \"$lte\" : \"" + toVal + "\" } }", query.ToString());
     }
 
     /// <summary>
