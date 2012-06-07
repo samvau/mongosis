@@ -314,18 +314,11 @@ public class MongoSourceTests {
     public void BuildQueryBuildsQueryWithFromAndToTest() {
         MongoDataSource_Accessor target = new MongoDataSource_Accessor();
 
-        IDTSCustomProperty100 condFieldProp = Mock.Create<IDTSCustomProperty100>();
-        IDTSCustomProperty100 fromProp = Mock.Create<IDTSCustomProperty100>();
-        IDTSCustomProperty100 toProp = Mock.Create<IDTSCustomProperty100>();
-
         string fieldName = "field1";
         string fromVal = "fromval";
         string toVal = "toval";
-        Mock.Arrange(() => condFieldProp.Value).Returns(fieldName);
-        Mock.Arrange(() => fromProp.Value).Returns(fromVal);
-        Mock.Arrange(() => toProp.Value).Returns(toVal);
 
-        IMongoQuery query = target.BuildQuery(condFieldProp,fromProp,toProp);
+        IMongoQuery query = target.BuildQuery(fieldName, fromVal, toVal);
 
         Assert.AreEqual("{ \"" + fieldName + "\" : { \"$gte\" : \"" + fromVal + "\", \"$lte\" : \"" + toVal + "\" } }", query.ToString());
     }
@@ -338,18 +331,10 @@ public class MongoSourceTests {
     public void BuildQueryBuildsQueryWithFromOnlyTest() {
         MongoDataSource_Accessor target = new MongoDataSource_Accessor();
 
-        IDTSCustomProperty100 condFieldProp = Mock.Create<IDTSCustomProperty100>();
-        IDTSCustomProperty100 fromProp = Mock.Create<IDTSCustomProperty100>();
-        IDTSCustomProperty100 toProp = Mock.Create<IDTSCustomProperty100>();
-
         string fieldName = "field1";
         string fromVal = "fromval";
-        string toVal = "";
-        Mock.Arrange(() => condFieldProp.Value).Returns(fieldName);
-        Mock.Arrange(() => fromProp.Value).Returns(fromVal);
-        Mock.Arrange(() => toProp.Value).Returns(toVal);
 
-        IMongoQuery query = target.BuildQuery(condFieldProp, fromProp, toProp);
+        IMongoQuery query = target.BuildQuery(fieldName, fromVal, null);
 
         Assert.AreEqual("{ \"" + fieldName + "\" : { \"$gte\" : \"" + fromVal + "\" } }", query.ToString());
     }
@@ -362,18 +347,10 @@ public class MongoSourceTests {
     public void BuildQueryBuildsQueryWithToOnlyTest() {
         MongoDataSource_Accessor target = new MongoDataSource_Accessor();
 
-        IDTSCustomProperty100 condFieldProp = Mock.Create<IDTSCustomProperty100>();
-        IDTSCustomProperty100 fromProp = Mock.Create<IDTSCustomProperty100>();
-        IDTSCustomProperty100 toProp = Mock.Create<IDTSCustomProperty100>();
-
         string fieldName = "field1";
-        string fromVal = "";
         string toVal = "toval";
-        Mock.Arrange(() => condFieldProp.Value).Returns(fieldName);
-        Mock.Arrange(() => fromProp.Value).Returns(fromVal);
-        Mock.Arrange(() => toProp.Value).Returns(toVal);
 
-        IMongoQuery query = target.BuildQuery(condFieldProp, fromProp, toProp);
+        IMongoQuery query = target.BuildQuery(fieldName, null, toVal);
 
         Assert.AreEqual("{ \"" + fieldName + "\" : { \"$lte\" : \"" + toVal + "\" } }", query.ToString());
     }
@@ -390,7 +367,7 @@ public class MongoSourceTests {
 
         object parsedValue = target.ParseConditionValue(value, DataType.DT_DATE);
 
-        Assert.AreEqual(DateTime.Parse(value),parsedValue);
+        Assert.AreEqual(DateTime.Parse(value).ToLongDateString(),((BsonDateTime)parsedValue).AsDateTime.ToLongDateString());
     }
 
     /// <summary>
@@ -405,7 +382,9 @@ public class MongoSourceTests {
 
         object parsedValue = target.ParseConditionValue(value, DataType.DT_DATE);
 
-        Assert.AreEqual(DateTime.Now, parsedValue);
+        Assert.IsTrue(parsedValue is BsonDateTime);
+        
+        Assert.AreEqual(DateTime.Now.ToLongDateString(), ((BsonDateTime)parsedValue).AsDateTime.ToLongDateString());
     }
 
     /// <summary>
@@ -420,7 +399,7 @@ public class MongoSourceTests {
 
         object parsedValue = target.ParseConditionValue(value, DataType.DT_DATE);
 
-        Assert.AreEqual(DateTime.Now, parsedValue);
+        Assert.AreEqual(DateTime.Now.ToLongDateString(), ((BsonDateTime)parsedValue).AsDateTime.ToLongDateString());
     }
 
     /// <summary>
@@ -434,7 +413,7 @@ public class MongoSourceTests {
 
         object parsedValue = target.ParseConditionValue(value, DataType.DT_DATE);
 
-        Assert.AreEqual(DateTime.Now.AddDays(-1), parsedValue);
+        Assert.AreEqual(DateTime.Now.AddDays(-1).ToLongDateString(), ((BsonDateTime)parsedValue).AsDateTime.ToLongDateString());
     }
 
     /// <summary>
@@ -445,13 +424,14 @@ public class MongoSourceTests {
         MongoDataSource_Accessor target = new MongoDataSource_Accessor();
 
         string value = "123";
+        BsonInt64 expected = new BsonInt64(Int64.Parse(value));
         object parsedValue = target.ParseConditionValue(value, DataType.DT_I8);
 
-        Assert.AreEqual(Int64.Parse(value), parsedValue);
+        Assert.AreEqual(expected, parsedValue);
 
         parsedValue = target.ParseConditionValue(value, DataType.DT_I4);
 
-        Assert.AreEqual(Int64.Parse(value), parsedValue);
+        Assert.AreEqual(expected, parsedValue);
     }
 
     /// <summary>
@@ -464,7 +444,7 @@ public class MongoSourceTests {
         string value = "blah";
         object parsedValue = target.ParseConditionValue(value, DataType.DT_STR);
 
-        Assert.AreEqual(value, parsedValue);
+        Assert.AreEqual(new BsonString(value), parsedValue);
     }
 
     /// <summary>
@@ -475,13 +455,14 @@ public class MongoSourceTests {
         MongoDataSource_Accessor target = new MongoDataSource_Accessor();
 
         string value = "12.34";
+        BsonDouble expected = new BsonDouble(Double.Parse(value));
         object parsedValue = target.ParseConditionValue(value, DataType.DT_R8);
 
-        Assert.AreEqual(Double.Parse(value), parsedValue);
+        Assert.AreEqual(expected, parsedValue);
 
         parsedValue = target.ParseConditionValue(value, DataType.DT_R4);
 
-        Assert.AreEqual(Double.Parse(value), parsedValue);
+        Assert.AreEqual(expected, parsedValue);
     }
 
 }

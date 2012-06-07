@@ -249,20 +249,34 @@ namespace MongoDataSource {
         }
 
         private IMongoQuery BuildQuery(IDTSCustomProperty100 condFieldProp,IDTSCustomProperty100 fromProp,IDTSCustomProperty100 toProp) {
+            BsonValue fromValue = GetBsonValueForQueryCondition(condFieldProp.Value, fromProp.Value);
+            BsonValue toValue = GetBsonValueForQueryCondition(condFieldProp.Value, toProp.Value);
+
+            return BuildQuery(condFieldProp.Value, fromValue, toValue);
+        }
+
+        private BsonValue GetBsonValueForQueryCondition(string fieldName, string value) {
+            if(String.IsNullOrEmpty(value)) return null;
+
+            ColumnInfo info = GetColumnInfo(fieldName);
+            return ParseConditionValue(value, info.ColumnDataType);
+        }
+
+        private IMongoQuery BuildQuery(string conditionFieldName, BsonValue fromValue, BsonValue toValue) {
             IMongoQuery finalQuery = null;
             IMongoQuery fromQuery = null;
             IMongoQuery toQuery = null;
 
-            if (!String.IsNullOrEmpty(fromProp.Value)) {
-                fromQuery = Query.GTE(condFieldProp.Value, fromProp.Value);
+            if (fromValue != null) {
+                fromQuery = Query.GTE(conditionFieldName, fromValue);
             }
-            if (!String.IsNullOrEmpty(toProp.Value)) {
-                toQuery = Query.LTE(condFieldProp.Value, toProp.Value);
+            if (toValue != null) {
+                toQuery = Query.LTE(conditionFieldName, toValue);
             }
 
             if (fromQuery != null && toQuery != null) {
-                finalQuery = Query.And(fromQuery,toQuery);
-            } else if(toQuery != null) {
+                finalQuery = Query.And(fromQuery, toQuery);
+            } else if (toQuery != null) {
                 finalQuery = toQuery;
             } else {
                 finalQuery = fromQuery;
@@ -271,22 +285,22 @@ namespace MongoDataSource {
             return finalQuery;
         }
 
-        private object ParseConditionValue(String value, DataType dt) {
-            object parsedValue = value;
+        private BsonValue ParseConditionValue(String value, DataType dt) {
+            BsonValue parsedValue = value;
 
             if (dt == DataType.DT_DATE | dt == DataType.DT_DBTIMESTAMPOFFSET | dt == DataType.DT_DBTIMESTAMP) {
                 if ("now".Equals(value, StringComparison.CurrentCultureIgnoreCase) ||
                     "today".Equals(value,StringComparison.CurrentCultureIgnoreCase)) {
-                    parsedValue = DateTime.Now;
+                    parsedValue = new BsonDateTime(DateTime.Now);
                 } else if("yesterday".Equals(value,StringComparison.CurrentCultureIgnoreCase)) {
-                    parsedValue = DateTime.Now.AddDays(-1);
+                    parsedValue = new BsonDateTime(DateTime.Now.AddDays(-1));
                 } else {
-                    parsedValue = DateTime.Parse(value);
+                    parsedValue = new BsonDateTime(DateTime.Parse(value));
                 }
             } else if (dt == DataType.DT_I8 || dt == DataType.DT_I4) {
-                parsedValue = Int64.Parse(value);
+                parsedValue = new BsonInt64(Int64.Parse(value));
             } else if (dt == DataType.DT_R8 || dt == DataType.DT_R4) {
-                parsedValue = Double.Parse(value);
+                parsedValue = new BsonDouble(Double.Parse(value));
             }
             
             return parsedValue;
@@ -315,6 +329,15 @@ namespace MongoDataSource {
 
                 return value.ToString();
             }
+        }
+
+        private ColumnInfo GetColumnInfo(String name) {
+            foreach(ColumnInfo info in columnInformation) {
+                if (info.ColumnName.Equals(name)) {
+                    return info;
+                }
+            }
+            return null;
         }
 
     }
