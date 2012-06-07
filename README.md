@@ -1,9 +1,8 @@
-
-![Mongosis Logo](http://tech.simplybusiness.co.uk/wp-content/uploads/2012/06/Mongosis3Smaller.png)
-
 # Mongosis : Custom SSIS Data Source and Connection Manager for Mongo DB
 
 This is the Custom Adapter for Microsoft's SSIS to connect to MongoDB, licensed under the MIT license.
+
+<div style="margin-left:auto;margin-right:auto;width:300px;"><img src="http://tech.simplybusiness.co.uk/wp-content/uploads/2012/06/Mongosis3Smaller.png" alt="Mongosis logo"></div>
 
 ## Dependencies
 
