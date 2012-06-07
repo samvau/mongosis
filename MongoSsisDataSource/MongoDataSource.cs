@@ -249,11 +249,26 @@ namespace MongoDataSource {
         }
 
         private IMongoQuery BuildQuery(IDTSCustomProperty100 condFieldProp,IDTSCustomProperty100 fromProp,IDTSCustomProperty100 toProp) {
+            IMongoQuery finalQuery = null;
+            IMongoQuery fromQuery = null;
+            IMongoQuery toQuery = null;
 
-            var fromQuery = Query.GT(condFieldProp.Value,fromProp.Value);
-            var toQuery = Query.LT(condFieldProp.Value, toProp.Value);
+            if (!String.IsNullOrEmpty(fromProp.Value)) {
+                fromQuery = Query.GT(condFieldProp.Value, fromProp.Value);
+            }
+            if (!String.IsNullOrEmpty(toProp.Value)) {
+                toQuery = Query.LT(condFieldProp.Value, toProp.Value);
+            }
 
-            return Query.And(fromQuery,toQuery);
+            if (fromQuery != null && toQuery != null) {
+                finalQuery = Query.And(fromQuery,toQuery);
+            } else if(toQuery != null) {
+                finalQuery = toQuery;
+            } else {
+                finalQuery = fromQuery;
+            }
+
+            return finalQuery;
         }
 
         private object GetValue(BsonDocument document, ColumnInfo ci) {

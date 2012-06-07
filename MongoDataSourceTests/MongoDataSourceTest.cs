@@ -307,11 +307,11 @@ public class MongoSourceTests {
     }
 
     /// <summary>
-    ///A test for AddCustomProperties
+    ///A test for BuildQuery
     ///</summary>
     [TestMethod()]
     [DeploymentItem("MongoSsisDataSource.dll")]
-    public void BuildQueryTest() {
+    public void BuildQueryBuildsQueryWithFromAndToTest() {
         MongoDataSource_Accessor target = new MongoDataSource_Accessor();
 
         IDTSCustomProperty100 condFieldProp = Mock.Create<IDTSCustomProperty100>();
@@ -329,5 +329,54 @@ public class MongoSourceTests {
 
         Assert.AreEqual("{ \"" + fieldName + "\" : { \"$gt\" : \"" + fromVal + "\", \"$lt\" : \"" + toVal + "\" } }", query.ToString());
     }
+
+    /// <summary>
+    ///A test for BuildQuery
+    ///</summary>
+    [TestMethod()]
+    [DeploymentItem("MongoSsisDataSource.dll")]
+    public void BuildQueryBuildsQueryWithFromOnlyTest() {
+        MongoDataSource_Accessor target = new MongoDataSource_Accessor();
+
+        IDTSCustomProperty100 condFieldProp = Mock.Create<IDTSCustomProperty100>();
+        IDTSCustomProperty100 fromProp = Mock.Create<IDTSCustomProperty100>();
+        IDTSCustomProperty100 toProp = Mock.Create<IDTSCustomProperty100>();
+
+        string fieldName = "field1";
+        string fromVal = "fromval";
+        string toVal = "";
+        Mock.Arrange(() => condFieldProp.Value).Returns(fieldName);
+        Mock.Arrange(() => fromProp.Value).Returns(fromVal);
+        Mock.Arrange(() => toProp.Value).Returns(toVal);
+
+        IMongoQuery query = target.BuildQuery(condFieldProp, fromProp, toProp);
+
+        Assert.AreEqual("{ \"" + fieldName + "\" : { \"$gt\" : \"" + fromVal + "\" } }", query.ToString());
+    }
+
+    /// <summary>
+    ///A test for BuildQuery
+    ///</summary>
+    [TestMethod()]
+    [DeploymentItem("MongoSsisDataSource.dll")]
+    public void BuildQueryBuildsQueryWithToOnlyTest() {
+        MongoDataSource_Accessor target = new MongoDataSource_Accessor();
+
+        IDTSCustomProperty100 condFieldProp = Mock.Create<IDTSCustomProperty100>();
+        IDTSCustomProperty100 fromProp = Mock.Create<IDTSCustomProperty100>();
+        IDTSCustomProperty100 toProp = Mock.Create<IDTSCustomProperty100>();
+
+        string fieldName = "field1";
+        string fromVal = "";
+        string toVal = "toval";
+        Mock.Arrange(() => condFieldProp.Value).Returns(fieldName);
+        Mock.Arrange(() => fromProp.Value).Returns(fromVal);
+        Mock.Arrange(() => toProp.Value).Returns(toVal);
+
+        IMongoQuery query = target.BuildQuery(condFieldProp, fromProp, toProp);
+
+        Assert.AreEqual("{ \"" + fieldName + "\" : { \"$lt\" : \"" + toVal + "\" } }", query.ToString());
+    }
+
 }
 
