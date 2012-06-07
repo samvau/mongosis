@@ -234,18 +234,21 @@ namespace MongoDataSource {
         }
 
         private dynamic GetCollectionCursor(dynamic collection) {
-            /*IDTSCustomProperty100 conditionalFieldProp = ComponentMetaData.CustomPropertyCollection[CONDITIONAL_FIELD_PROP_NAME];
-            if (conditionalFieldProp != null) {
-                IDTSCustomProperty100 fromValue = ComponentMetaData.CustomPropertyCollection[CONDITION_FROM_PROP_NAME];
+            IDTSCustomProperty100 conditionalFieldProp = ComponentMetaData.CustomPropertyCollection[CONDITIONAL_FIELD_PROP_NAME];
+            if (!String.IsNullOrEmpty(conditionalFieldProp.Value)) {
+                IDTSCustomProperty100 fromValueProp = ComponentMetaData.CustomPropertyCollection[CONDITION_FROM_PROP_NAME];
                 IDTSCustomProperty100 toValueProp = ComponentMetaData.CustomPropertyCollection[CONDITION_TO_PROP_NAME];
 
-                var fromQuery = Query.GT(conditionalFieldProp.Value,fromValue.Value);
+                IMongoQuery query = BuildQuery(conditionalFieldProp, fromValueProp, toValueProp);
 
-                return null;
+                ComponentMetaData.FireInformation(0, "MongoDataSource", "selecting data with query: " + query, String.Empty, 0, false);
+
+                return collection.Find(query);
             } else {
+                ComponentMetaData.FireInformation(0, "MongoDataSource", "selecting all data", String.Empty, 0, false);
+
                 return collection.FindAll();
-            }*/
-            return collection.FindAll();
+            }
         }
 
         private IMongoQuery BuildQuery(IDTSCustomProperty100 condFieldProp,IDTSCustomProperty100 fromProp,IDTSCustomProperty100 toProp) {
