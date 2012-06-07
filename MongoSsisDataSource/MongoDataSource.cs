@@ -22,6 +22,8 @@ namespace MongoDataSource {
         private static string CONDITIONAL_FIELD_PROP_NAME = "ConditionalFieldName";
         private static string CONDITION_FROM_PROP_NAME = "ConditionFromValue";
         private static string CONDITION_TO_PROP_NAME = "ConditionToValue";
+        private static string CONDITION_DOC_PROP_NAME = "ConditionQuery";
+
         private IDTSConnectionManager100 m_ConnMgr;
         private ArrayList columnInformation;
         private MongoDatabase database;
@@ -50,12 +52,16 @@ namespace MongoDataSource {
             customProperty.Name = CONDITIONAL_FIELD_PROP_NAME;
             
             customProperty = customPropertyCollection.New();
-            customProperty.Description = "From value for conditional query";
+            customProperty.Description = "'From' value for conditional query";
             customProperty.Name = CONDITION_FROM_PROP_NAME;
             
             customProperty = customPropertyCollection.New();
-            customProperty.Description = "To value for conditional query";
+            customProperty.Description = "'To' value for conditional query";
             customProperty.Name = CONDITION_TO_PROP_NAME;
+
+            customProperty = customPropertyCollection.New();
+            customProperty.Description = "Mongo query document for conditional query";
+            customProperty.Name = CONDITION_DOC_PROP_NAME;
         }
 
         private IDTSCustomPropertyCollection100 GetCustomPropertyCollection() {
@@ -234,8 +240,14 @@ namespace MongoDataSource {
         }
 
         private dynamic GetCollectionCursor(dynamic collection) {
+            IDTSCustomProperty100 queryProp = ComponentMetaData.CustomPropertyCollection[CONDITION_DOC_PROP_NAME];
             IDTSCustomProperty100 conditionalFieldProp = ComponentMetaData.CustomPropertyCollection[CONDITIONAL_FIELD_PROP_NAME];
-            if (!String.IsNullOrEmpty(conditionalFieldProp.Value)) {
+            
+            if(!String.IsNullOrEmpty(queryProp.Value)) {
+                ComponentMetaData.FireInformation(0, "MongoDataSource", "selecting data with specified query: " + queryProp.Value, String.Empty, 0, false);
+
+                return collection.Find(new QueryDocument(BsonDocument.Parse(queryProp.Value)));
+            } else if (!String.IsNullOrEmpty(conditionalFieldProp.Value)) {
                 IDTSCustomProperty100 fromValueProp = ComponentMetaData.CustomPropertyCollection[CONDITION_FROM_PROP_NAME];
                 IDTSCustomProperty100 toValueProp = ComponentMetaData.CustomPropertyCollection[CONDITION_TO_PROP_NAME];
 

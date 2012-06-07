@@ -274,31 +274,36 @@ public class MongoSourceTests {
     [DeploymentItem("MongoSsisDataSource.dll")]
     public void AddCustomPropertiesTest() {
         MongoDataSource_Accessor target = new MongoDataSource_Accessor(); 
+        
         IDTSCustomPropertyCollection100 customPropertyCollection = Mock.Create<IDTSCustomPropertyCollection100>();
 
         IDTSCustomProperty100 collectionNameProp = Mock.Create<IDTSCustomProperty100>();
         IDTSCustomProperty100 conditionalFieldProp = Mock.Create<IDTSCustomProperty100>();
         IDTSCustomProperty100 fromValueProp = Mock.Create<IDTSCustomProperty100>();
         IDTSCustomProperty100 toValueProp = Mock.Create<IDTSCustomProperty100>();
+        IDTSCustomProperty100 queryProp = Mock.Create<IDTSCustomProperty100>();
 
         Mock.Arrange(() => customPropertyCollection.New()).Returns(collectionNameProp).InSequence();
         Mock.Arrange(() => customPropertyCollection.New()).Returns(conditionalFieldProp).InSequence();
         Mock.Arrange(() => customPropertyCollection.New()).Returns(fromValueProp).InSequence();
         Mock.Arrange(() => customPropertyCollection.New()).Returns(toValueProp).InSequence();
+        Mock.Arrange(() => customPropertyCollection.New()).Returns(queryProp).InSequence();
 
         assertSetPropertyNameAndDescription(collectionNameProp, MongoDataSource_Accessor.COLLECTION_NAME_PROP_NAME);
         assertSetPropertyNameAndDescription(conditionalFieldProp, MongoDataSource_Accessor.CONDITIONAL_FIELD_PROP_NAME);
         assertSetPropertyNameAndDescription(fromValueProp, MongoDataSource_Accessor.CONDITION_FROM_PROP_NAME);
         assertSetPropertyNameAndDescription(toValueProp, MongoDataSource_Accessor.CONDITION_TO_PROP_NAME);
+        assertSetPropertyNameAndDescription(queryProp, MongoDataSource_Accessor.CONDITION_DOC_PROP_NAME);
 
         target.AddCustomProperties(customPropertyCollection);
 
-        Mock.Assert(() => customPropertyCollection.New(), Occurs.Exactly(4));
+        Mock.Assert(() => customPropertyCollection.New(), Occurs.Exactly(5));
 
         Mock.Assert(collectionNameProp);
         Mock.Assert(conditionalFieldProp);
         Mock.Assert(fromValueProp);
         Mock.Assert(toValueProp);
+        Mock.Assert(queryProp);
     }
 
     private void assertSetPropertyNameAndDescription(IDTSCustomProperty100 propMock, String propName) {
