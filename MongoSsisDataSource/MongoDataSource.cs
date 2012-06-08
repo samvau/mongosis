@@ -270,6 +270,11 @@ namespace MongoDataSource {
             if(String.IsNullOrEmpty(value)) return null;
 
             ColumnInfo info = GetColumnInfo(fieldName);
+
+            if (info == null) {
+                throw new Exception("No information was found for the column '" + fieldName + "', ensure the column name is correct"); 
+            }
+
             return ParseConditionValue(value, info.ColumnDataType);
         }
 
