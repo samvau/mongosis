@@ -305,6 +305,9 @@ namespace MongoDataSource {
                     parsedValue = new BsonDateTime(DateTime.Now);
                 } else if("yesterday".Equals(value,StringComparison.CurrentCultureIgnoreCase)) {
                     parsedValue = new BsonDateTime(DateTime.Now.AddDays(-1));
+                } else if(value.StartsWith("-")) {
+                    int noOfDays = Int16.Parse(value);
+                    parsedValue = new BsonDateTime(DateTime.Now.AddDays(noOfDays));
                 } else {
                     parsedValue = new BsonDateTime(DateTime.Parse(value));
                 }

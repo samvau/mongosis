@@ -409,12 +409,26 @@ public class MongoSourceTests {
     [TestMethod()]
     public void ParseConditionValueForYesterdayTest() {
         MongoDataSource_Accessor target = new MongoDataSource_Accessor();
-
-        String value = "yesterday";
-
-        object parsedValue = target.ParseConditionValue(value, DataType.DT_DATE);
+        
+        object parsedValue = target.ParseConditionValue("yesterday", DataType.DT_DATE);
 
         Assert.AreEqual(DateTime.Now.AddDays(-1).ToLongDateString(), ((BsonDateTime)parsedValue).AsDateTime.ToLongDateString());
+    }
+
+    /// <summary>
+    ///A test for ParseConditionValue
+    ///</summary>
+    [TestMethod()]
+    public void ParseConditionValueForRelativeDateTest() {
+        MongoDataSource_Accessor target = new MongoDataSource_Accessor();
+
+        object parsedValue = target.ParseConditionValue("-2", DataType.DT_DATE);
+
+        Assert.AreEqual(DateTime.Now.AddDays(-2).ToLongDateString(), ((BsonDateTime)parsedValue).AsDateTime.ToLongDateString());
+
+        parsedValue = target.ParseConditionValue("-4", DataType.DT_DATE);
+
+        Assert.AreEqual(DateTime.Now.AddDays(-4).ToLongDateString(), ((BsonDateTime)parsedValue).AsDateTime.ToLongDateString());
     }
 
     /// <summary>
