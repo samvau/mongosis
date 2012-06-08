@@ -15,7 +15,10 @@ using MongoDB.Bson;
 
 namespace MongoDataSource {
 
-    [DtsPipelineComponent(DisplayName = "MongoDB Source", Description = "Mongosis - Loads data from a MongoDB data source", ComponentType = ComponentType.SourceAdapter)]
+    [DtsPipelineComponent(DisplayName = "MongoDB Source", 
+        Description = "Mongosis - Loads data from a MongoDB data source", 
+        ComponentType = ComponentType.SourceAdapter,
+        IconResource = "MongoDataSource.Resources.mongosis.ico")]
     public class MongoDataSource : PipelineComponent {
 
         private static string COLLECTION_NAME_PROP_NAME = "CollectionName";
