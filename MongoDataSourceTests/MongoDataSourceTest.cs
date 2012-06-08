@@ -383,9 +383,7 @@ public class MongoSourceTests {
     public void ParseConditionValueForNowTest() {
         MongoDataSource_Accessor target = new MongoDataSource_Accessor();
 
-        String value = "now";
-
-        object parsedValue = target.ParseConditionValue(value, DataType.DT_DATE);
+        object parsedValue = target.ParseConditionValue("now", DataType.DT_DATE);
 
         Assert.IsTrue(parsedValue is BsonDateTime);
         
@@ -400,9 +398,7 @@ public class MongoSourceTests {
     public void ParseConditionValueForTodayTest() {
         MongoDataSource_Accessor target = new MongoDataSource_Accessor();
 
-        String value = "today";
-
-        object parsedValue = target.ParseConditionValue(value, DataType.DT_DATE);
+        object parsedValue = target.ParseConditionValue("today", DataType.DT_DATE);
 
         Assert.AreEqual(DateTime.Now.ToLongDateString(), ((BsonDateTime)parsedValue).AsDateTime.ToLongDateString());
     }
