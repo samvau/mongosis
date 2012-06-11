@@ -80,13 +80,23 @@ namespace MongoDataSource {
         }
 
         public override object AcquireConnection(object txn) {
+            MongoDatabase database = null;
 
             if (_connectionString == null) {
                 UpdateConnectionString();
             }
 
-            MongoServer mongoinstance = MongoServer.Create(_connectionString);
-            MongoDatabase database = mongoinstance.GetDatabase(DatabaseName);
+            if (!string.IsNullOrEmpty(_connectionString)) {
+                MongoServer mongoinstance = MongoServer.Create(_connectionString);
+
+                if (string.IsNullOrEmpty(DatabaseName)) {
+                    throw new System.Exception("No database specified");
+                }
+
+                database = mongoinstance.GetDatabase(DatabaseName);
+            } else {
+                throw new System.Exception("Can not connect to MongoDB with empty connection string");
+            }
 
             return database;
         }
