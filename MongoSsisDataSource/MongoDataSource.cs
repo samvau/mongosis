@@ -50,26 +50,23 @@ namespace MongoDataSource {
         }
 
         private void AddCustomProperties(IDTSCustomPropertyCollection100 customPropertyCollection) {
-            IDTSCustomProperty100 customProperty = customPropertyCollection.New();
-            customProperty.Name = COLLECTION_NAME_PROP_NAME;
-            customProperty.Description = "Name of collection to import data from";
+            IDTSCustomProperty100 customProperty = createCustomProperty(customPropertyCollection, COLLECTION_NAME_PROP_NAME, "Name of collection to import data from");
             customProperty.UITypeEditor = typeof(CollectionNameEditor).AssemblyQualifiedName;
             
-            customProperty = customPropertyCollection.New();
-            customProperty.Description = "Field name for conditional query";
-            customProperty.Name = CONDITIONAL_FIELD_PROP_NAME;
-            
-            customProperty = customPropertyCollection.New();
-            customProperty.Description = "'From' value for conditional query";
-            customProperty.Name = CONDITION_FROM_PROP_NAME;
-            
-            customProperty = customPropertyCollection.New();
-            customProperty.Description = "'To' value for conditional query";
-            customProperty.Name = CONDITION_TO_PROP_NAME;
+            customProperty = createCustomProperty(customPropertyCollection, CONDITIONAL_FIELD_PROP_NAME, "Field name for conditional query");
+            customProperty.UITypeEditor = typeof(ColumnNameEditor).AssemblyQualifiedName;
 
-            customProperty = customPropertyCollection.New();
-            customProperty.Description = "Mongo query document for conditional query";
-            customProperty.Name = CONDITION_DOC_PROP_NAME;
+            createCustomProperty(customPropertyCollection, CONDITION_FROM_PROP_NAME, "'From' value for conditional query");
+            createCustomProperty(customPropertyCollection, CONDITION_TO_PROP_NAME, "'To' value for conditional query");
+            createCustomProperty(customPropertyCollection, CONDITION_DOC_PROP_NAME, "Mongo query document for conditional query");
+        }
+
+        private IDTSCustomProperty100 createCustomProperty(IDTSCustomPropertyCollection100 customPropertyCollection, string name, string description) {
+            IDTSCustomProperty100 customProperty = customPropertyCollection.New();
+            customProperty.Description = description;
+            customProperty.Name = name;
+
+            return customProperty;
         }
 
         private IDTSCustomPropertyCollection100 GetCustomPropertyCollection() {
@@ -374,6 +371,7 @@ namespace MongoDataSource {
         internal string ColumnName;
         internal DataType ColumnDataType;
     }
+
     internal class CollectionNameEditor : UITypeEditor {
         private IWindowsFormsEditorService edSvc = null; 
 
@@ -468,4 +466,38 @@ namespace MongoDataSource {
         }
     }
 
+    internal class ColumnNameEditor : UITypeEditor {
+        private IWindowsFormsEditorService edSvc = null;
+
+        public override object EditValue(System.ComponentModel.ITypeDescriptorContext context, IServiceProvider provider, object value) {
+            edSvc = (IWindowsFormsEditorService)provider.GetService(typeof(IWindowsFormsEditorService));
+
+            if (edSvc != null) {
+                
+                ListBox lb = new ListBox();
+
+                lb.Items.Add("analytica_updated_at");
+                lb.Items.Add("analytica_not_updated_at");
+
+                lb.SelectionMode = SelectionMode.One;
+                lb.SelectedValueChanged += OnListBoxSelectedValueChanged;
+                edSvc.DropDownControl(lb);
+
+                if (lb.SelectedItem != null) {
+                    return lb.SelectedItem;
+                }
+               
+            }
+            return value;
+        }
+
+        public override UITypeEditorEditStyle GetEditStyle(System.ComponentModel.ITypeDescriptorContext context) {
+            return UITypeEditorEditStyle.DropDown;
+        }
+
+        private void OnListBoxSelectedValueChanged(object sender, EventArgs e) {
+            // close the drop down as soon as something is clicked
+            edSvc.CloseDropDown();
+        }
+    }
 }
