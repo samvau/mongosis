@@ -24,6 +24,7 @@ namespace MongoDataSource {
         private ArrayList columnInformation;
         private string _collectionName = string.Empty;
         internal MongoDatabase database;
+        public static string MONGODB_CONNECTION_MANAGER_NAME = "MongoDB";
 
         public string CollectionName {
             get { return _collectionName; }
@@ -43,7 +44,7 @@ namespace MongoDataSource {
             output.Name = "Output";
 
             IDTSRuntimeConnection100 conn = ComponentMetaData.RuntimeConnectionCollection.New();
-            conn.Name = "MongoDB";
+            conn.Name = MONGODB_CONNECTION_MANAGER_NAME;
         }
 
         public override Microsoft.SqlServer.Dts.Pipeline.Wrapper.IDTSCustomProperty100 SetComponentProperty(string propertyName, object propertyValue) {
@@ -307,7 +308,7 @@ namespace MongoDataSource {
         private Microsoft.SqlServer.Dts.Runtime.ConnectionManager GetMongoDBConnectionManager(Microsoft.SqlServer.Dts.Runtime.Package package) {
             if (package != null) {
                 foreach (Microsoft.SqlServer.Dts.Runtime.ConnectionManager cm in package.Connections) {
-                    if (cm.CreationName.Equals("MongoDB")) {
+                    if (cm.CreationName.Equals(MongoDataSource.MONGODB_CONNECTION_MANAGER_NAME)) {
                         return cm;
                     }
                 }
