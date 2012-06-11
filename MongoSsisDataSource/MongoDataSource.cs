@@ -264,28 +264,36 @@ namespace MongoDataSource {
             edSvc = (IWindowsFormsEditorService)provider.GetService(typeof(IWindowsFormsEditorService));
             
             if (edSvc != null) {
-                ListBox lb = new ListBox();
                 MongoDatabase database = GetDatabase(context);
-
+                
                 if (database != null) {
-                    foreach (String name in database.GetCollectionNames()) {
-                        if (!name.StartsWith("system")) {
-                            lb.Items.Add(name);
-                        }
+                    ListBox lb = BuildListBox(database);
+
+                    edSvc.DropDownControl(lb);
+
+                    if (lb.SelectedItem != null) {
+                        return lb.SelectedItem;
                     }
                 } else {
                     throw new Exception("No database connection found!");
                 }
-
-                lb.SelectionMode = SelectionMode.One;
-                lb.SelectedValueChanged += OnListBoxSelectedValueChanged;
-
-                edSvc.DropDownControl(lb);
-
-                if (lb.SelectedItem != null)
-                    return lb.SelectedItem;
             }
             return value;
+        }
+
+        private ListBox BuildListBox(MongoDatabase database) {
+            ListBox lb = new ListBox();
+
+            foreach (String name in database.GetCollectionNames()) {
+                if (!name.StartsWith("system")) {
+                    lb.Items.Add(name);
+                }
+            }
+
+            lb.SelectionMode = SelectionMode.One;
+            lb.SelectedValueChanged += OnListBoxSelectedValueChanged;
+
+            return lb;
         }
 
         private MongoDatabase GetDatabase(System.ComponentModel.ITypeDescriptorContext context) {
