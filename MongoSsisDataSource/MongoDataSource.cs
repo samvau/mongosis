@@ -41,7 +41,6 @@ namespace MongoDataSource {
             ComponentMetaData.RuntimeConnectionCollection.RemoveAll();
 
             AddCustomProperties(ComponentMetaData.CustomPropertyCollection);
-            customProperty.UITypeEditor = typeof(CollectionNameEditor).AssemblyQualifiedName;
             
             IDTSOutput100 output = ComponentMetaData.OutputCollection.New();
             output.Name = "Output";
@@ -54,7 +53,8 @@ namespace MongoDataSource {
             IDTSCustomProperty100 customProperty = customPropertyCollection.New();
             customProperty.Name = COLLECTION_NAME_PROP_NAME;
             customProperty.Description = "Name of collection to import data from";
-
+            customProperty.UITypeEditor = typeof(CollectionNameEditor).AssemblyQualifiedName;
+            
             customProperty = customPropertyCollection.New();
             customProperty.Description = "Field name for conditional query";
             customProperty.Name = CONDITIONAL_FIELD_PROP_NAME;
