@@ -46,25 +46,19 @@ namespace MongoDataSource {
         }
 
         private void AddCustomProperties(IDTSCustomPropertyCollection100 customPropertyCollection) {
+            createCustomProperty(customPropertyCollection, COLLECTION_NAME_PROP_NAME, "Name of collection to import data from");
+            createCustomProperty(customPropertyCollection, CONDITIONAL_FIELD_PROP_NAME, "Field name for conditional query");
+            createCustomProperty(customPropertyCollection, CONDITION_FROM_PROP_NAME, "'From' value for conditional query");
+            createCustomProperty(customPropertyCollection, CONDITION_TO_PROP_NAME, "'To' value for conditional query");
+            createCustomProperty(customPropertyCollection, CONDITION_DOC_PROP_NAME, "Mongo query document for conditional query");
+        }
+
+        private IDTSCustomProperty100 createCustomProperty(IDTSCustomPropertyCollection100 customPropertyCollection, string name, string description) {
             IDTSCustomProperty100 customProperty = customPropertyCollection.New();
-            customProperty.Name = COLLECTION_NAME_PROP_NAME;
-            customProperty.Description = "Name of collection to import data from";
+            customProperty.Description = description;
+            customProperty.Name = name;
 
-            customProperty = customPropertyCollection.New();
-            customProperty.Description = "Field name for conditional query";
-            customProperty.Name = CONDITIONAL_FIELD_PROP_NAME;
-            
-            customProperty = customPropertyCollection.New();
-            customProperty.Description = "'From' value for conditional query";
-            customProperty.Name = CONDITION_FROM_PROP_NAME;
-            
-            customProperty = customPropertyCollection.New();
-            customProperty.Description = "'To' value for conditional query";
-            customProperty.Name = CONDITION_TO_PROP_NAME;
-
-            customProperty = customPropertyCollection.New();
-            customProperty.Description = "Mongo query document for conditional query";
-            customProperty.Name = CONDITION_DOC_PROP_NAME;
+            return customProperty;
         }
 
         private IDTSCustomPropertyCollection100 GetCustomPropertyCollection() {
