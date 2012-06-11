@@ -90,7 +90,6 @@ namespace MongoDataSource {
                 AcquireConnections(null);
             }
 
-
             MongoCollection<BsonDocument> collection = database.GetCollection(collectionName);
 
             if (collection.Count() == 0) {
@@ -163,7 +162,6 @@ namespace MongoDataSource {
         public override void PreExecute() {
             this.columnInformation = new ArrayList();
             IDTSOutput100 output = ComponentMetaData.OutputCollection[0];
-
 
             foreach (IDTSOutputColumn100 col in output.OutputColumnCollection) {
                 ColumnInfo ci = new ColumnInfo();
