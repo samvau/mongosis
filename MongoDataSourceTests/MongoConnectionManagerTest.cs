@@ -65,6 +65,9 @@ public class MongoConnectionManagerTest {
     public void ValidateReturnsSuccessIfServerNameSpecifiedTest() {
         MongoConnectionManager target = new MongoConnectionManager();
         target.ServerName = "server123";
+        target.DatabaseName = "db123";
+        target.UserName = "user123";
+        target.Password = "pwd123";
         IDTSInfoEvents infoEvents = null;
         DTSExecResult expected = DTSExecResult.Success;
         DTSExecResult actual = default(DTSExecResult);
@@ -79,6 +82,60 @@ public class MongoConnectionManagerTest {
     public void ValidateReturnsFailureIfServerNameEmptyTest() {
         MongoConnectionManager target = new MongoConnectionManager();
         target.ServerName = "";
+        target.DatabaseName = "db123";
+        target.UserName = "user123";
+        target.Password = "pwd123";
+        IDTSInfoEvents infoEvents = null;
+        DTSExecResult expected = DTSExecResult.Failure;
+        DTSExecResult actual = default(DTSExecResult);
+        actual = target.Validate(infoEvents);
+        Assert.AreEqual(expected, actual);
+    }
+
+    ///<summary>
+    ///A test for Validate
+    ///</summary>
+    [TestMethod()]
+    public void ValidateReturnsFailureIfUserNameEmptyTest() {
+        MongoConnectionManager target = new MongoConnectionManager();
+        target.ServerName = "server123";
+        target.DatabaseName = "db123";
+        target.UserName = "";
+        target.Password = "pwd123";
+        IDTSInfoEvents infoEvents = null;
+        DTSExecResult expected = DTSExecResult.Failure;
+        DTSExecResult actual = default(DTSExecResult);
+        actual = target.Validate(infoEvents);
+        Assert.AreEqual(expected, actual);
+    }
+
+    ///<summary>
+    ///A test for Validate
+    ///</summary>
+    [TestMethod()]
+    public void ValidateReturnsFailureIfDBNameEmptyTest() {
+        MongoConnectionManager target = new MongoConnectionManager();
+        target.ServerName = "server123";
+        target.DatabaseName = "";
+        target.UserName = "user123";
+        target.Password = "pwd123";
+        IDTSInfoEvents infoEvents = null;
+        DTSExecResult expected = DTSExecResult.Failure;
+        DTSExecResult actual = default(DTSExecResult);
+        actual = target.Validate(infoEvents);
+        Assert.AreEqual(expected, actual);
+    }
+
+    ///<summary>
+    ///A test for Validate
+    ///</summary>
+    [TestMethod()]
+    public void ValidateReturnsFailureIfPasswordEmptyTest() {
+        MongoConnectionManager target = new MongoConnectionManager();
+        target.ServerName = "server123";
+        target.DatabaseName = "db123";
+        target.UserName = "user124";
+        target.Password = "";
         IDTSInfoEvents infoEvents = null;
         DTSExecResult expected = DTSExecResult.Failure;
         DTSExecResult actual = default(DTSExecResult);

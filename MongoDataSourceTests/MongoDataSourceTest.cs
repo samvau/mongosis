@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2012 Xbridge Ltd
  * See the file license.txt for copying permission.
  */
@@ -239,6 +239,7 @@ public class MongoSourceTests {
     [DeploymentItem("MongoSsisDataSource.dll")]
     public void PopulateExternalMetadataColumnTest() {
         MongoDataSource_Accessor target = new MongoDataSource_Accessor();
+
         IDTSOutputColumn100 outputColumn = Mock.Create<IDTSOutputColumn100>(Constructor.Mocked);
 
         String expectedName = "name";
@@ -264,6 +265,219 @@ public class MongoSourceTests {
         target.PopulateExternalMetadataColumn(expected, outputColumn);
 
         Mock.Assert(expected);
+    }
+
+    /// <summary>
+    ///A test for AddCustomProperties
+    ///</summary>
+    [TestMethod()]
+    [DeploymentItem("MongoSsisDataSource.dll")]
+    public void AddCustomPropertiesTest() {
+        MongoDataSource_Accessor target = new MongoDataSource_Accessor(); 
+        
+        IDTSCustomPropertyCollection100 customPropertyCollection = Mock.Create<IDTSCustomPropertyCollection100>();
+
+        IDTSCustomProperty100 collectionNameProp = Mock.Create<IDTSCustomProperty100>();
+        IDTSCustomProperty100 conditionalFieldProp = Mock.Create<IDTSCustomProperty100>();
+        IDTSCustomProperty100 fromValueProp = Mock.Create<IDTSCustomProperty100>();
+        IDTSCustomProperty100 toValueProp = Mock.Create<IDTSCustomProperty100>();
+        IDTSCustomProperty100 queryProp = Mock.Create<IDTSCustomProperty100>();
+
+        Mock.Arrange(() => customPropertyCollection.New()).Returns(collectionNameProp).InSequence();
+        Mock.Arrange(() => customPropertyCollection.New()).Returns(conditionalFieldProp).InSequence();
+        Mock.Arrange(() => customPropertyCollection.New()).Returns(fromValueProp).InSequence();
+        Mock.Arrange(() => customPropertyCollection.New()).Returns(toValueProp).InSequence();
+        Mock.Arrange(() => customPropertyCollection.New()).Returns(queryProp).InSequence();
+
+        assertSetPropertyNameAndDescription(collectionNameProp, MongoDataSource_Accessor.COLLECTION_NAME_PROP_NAME);
+        assertSetPropertyNameAndDescription(conditionalFieldProp, MongoDataSource_Accessor.CONDITIONAL_FIELD_PROP_NAME);
+        assertSetPropertyNameAndDescription(fromValueProp, MongoDataSource_Accessor.CONDITION_FROM_PROP_NAME);
+        assertSetPropertyNameAndDescription(toValueProp, MongoDataSource_Accessor.CONDITION_TO_PROP_NAME);
+        assertSetPropertyNameAndDescription(queryProp, MongoDataSource_Accessor.CONDITION_DOC_PROP_NAME);
+
+        target.AddCustomProperties(customPropertyCollection);
+
+        Mock.Assert(() => customPropertyCollection.New(), Occurs.Exactly(5));
+
+        Mock.Assert(collectionNameProp);
+        Mock.Assert(conditionalFieldProp);
+        Mock.Assert(fromValueProp);
+        Mock.Assert(toValueProp);
+        Mock.Assert(queryProp);
+    }
+
+    private void assertSetPropertyNameAndDescription(IDTSCustomProperty100 propMock, String propName) {
+        Mock.ArrangeSet(() => propMock.Name = Arg.Matches<String>(x => x == propName)).OccursOnce();
+        Mock.ArrangeSet(() => propMock.Description = Arg.IsAny<String>()).OccursOnce();
+    }
+
+    /// <summary>
+    ///A test for BuildQuery
+    ///</summary>
+    [TestMethod()]
+    [DeploymentItem("MongoSsisDataSource.dll")]
+    public void BuildQueryBuildsQueryWithFromAndToTest() {
+        MongoDataSource_Accessor target = new MongoDataSource_Accessor();
+
+        string fieldName = "field1";
+        string fromVal = "fromval";
+        string toVal = "toval";
+
+        IMongoQuery query = target.BuildQuery(fieldName, fromVal, toVal);
+
+        Assert.AreEqual("{ \"" + fieldName + "\" : { \"$gte\" : \"" + fromVal + "\", \"$lte\" : \"" + toVal + "\" } }", query.ToString());
+    }
+
+    /// <summary>
+    ///A test for BuildQuery
+    ///</summary>
+    [TestMethod()]
+    [DeploymentItem("MongoSsisDataSource.dll")]
+    public void BuildQueryBuildsQueryWithFromOnlyTest() {
+        MongoDataSource_Accessor target = new MongoDataSource_Accessor();
+
+        string fieldName = "field1";
+        string fromVal = "fromval";
+
+        IMongoQuery query = target.BuildQuery(fieldName, fromVal, null);
+
+        Assert.AreEqual("{ \"" + fieldName + "\" : { \"$gte\" : \"" + fromVal + "\" } }", query.ToString());
+    }
+
+    /// <summary>
+    ///A test for BuildQuery
+    ///</summary>
+    [TestMethod()]
+    [DeploymentItem("MongoSsisDataSource.dll")]
+    public void BuildQueryBuildsQueryWithToOnlyTest() {
+        MongoDataSource_Accessor target = new MongoDataSource_Accessor();
+
+        string fieldName = "field1";
+        string toVal = "toval";
+
+        IMongoQuery query = target.BuildQuery(fieldName, null, toVal);
+
+        Assert.AreEqual("{ \"" + fieldName + "\" : { \"$lte\" : \"" + toVal + "\" } }", query.ToString());
+    }
+
+    /// <summary>
+    ///A test for ParseConditionValue
+    ///</summary>
+    [TestMethod()]
+    [DeploymentItem("MongoSsisDataSource.dll")]
+    public void ParseConditionValueForSimpleDateTest() {
+        MongoDataSource_Accessor target = new MongoDataSource_Accessor();
+
+        String value = "12/12/2012";
+
+        object parsedValue = target.ParseConditionValue(value, DataType.DT_DATE);
+
+        Assert.AreEqual(DateTime.Parse(value).ToLongDateString(),((BsonDateTime)parsedValue).AsDateTime.ToLongDateString());
+    }
+
+    /// <summary>
+    ///A test for ParseConditionValue
+    ///</summary>
+    [TestMethod()]
+    [DeploymentItem("MongoSsisDataSource.dll")]
+    public void ParseConditionValueForNowTest() {
+        MongoDataSource_Accessor target = new MongoDataSource_Accessor();
+
+        object parsedValue = target.ParseConditionValue("now", DataType.DT_DATE);
+
+        Assert.IsTrue(parsedValue is BsonDateTime);
+        
+        Assert.AreEqual(DateTime.Now.ToLongDateString(), ((BsonDateTime)parsedValue).AsDateTime.ToLongDateString());
+    }
+
+    /// <summary>
+    ///A test for ParseConditionValue
+    ///</summary>
+    [TestMethod()]
+    [DeploymentItem("MongoSsisDataSource.dll")]
+    public void ParseConditionValueForTodayTest() {
+        MongoDataSource_Accessor target = new MongoDataSource_Accessor();
+
+        object parsedValue = target.ParseConditionValue("today", DataType.DT_DATE);
+
+        Assert.AreEqual(DateTime.Now.ToLongDateString(), ((BsonDateTime)parsedValue).AsDateTime.ToLongDateString());
+    }
+
+    /// <summary>
+    ///A test for ParseConditionValue
+    ///</summary>
+    [TestMethod()]
+    public void ParseConditionValueForYesterdayTest() {
+        MongoDataSource_Accessor target = new MongoDataSource_Accessor();
+        
+        object parsedValue = target.ParseConditionValue("yesterday", DataType.DT_DATE);
+
+        Assert.AreEqual(DateTime.Now.AddDays(-1).ToLongDateString(), ((BsonDateTime)parsedValue).AsDateTime.ToLongDateString());
+    }
+
+    /// <summary>
+    ///A test for ParseConditionValue
+    ///</summary>
+    [TestMethod()]
+    public void ParseConditionValueForRelativeDateTest() {
+        MongoDataSource_Accessor target = new MongoDataSource_Accessor();
+
+        object parsedValue = target.ParseConditionValue("-2", DataType.DT_DATE);
+
+        Assert.AreEqual(DateTime.Now.AddDays(-2).ToLongDateString(), ((BsonDateTime)parsedValue).AsDateTime.ToLongDateString());
+
+        parsedValue = target.ParseConditionValue("-4", DataType.DT_DATE);
+
+        Assert.AreEqual(DateTime.Now.AddDays(-4).ToLongDateString(), ((BsonDateTime)parsedValue).AsDateTime.ToLongDateString());
+    }
+
+    /// <summary>
+    ///A test for ParseConditionValue
+    ///</summary>
+    [TestMethod()]
+    public void ParseConditionValueForIntTest() {
+        MongoDataSource_Accessor target = new MongoDataSource_Accessor();
+
+        string value = "123";
+        BsonInt64 expected = new BsonInt64(Int64.Parse(value));
+        object parsedValue = target.ParseConditionValue(value, DataType.DT_I8);
+
+        Assert.AreEqual(expected, parsedValue);
+
+        parsedValue = target.ParseConditionValue(value, DataType.DT_I4);
+
+        Assert.AreEqual(expected, parsedValue);
+    }
+
+    /// <summary>
+    ///A test for ParseConditionValue
+    ///</summary>
+    [TestMethod()]
+    public void ParseConditionValueForStringTest() {
+        MongoDataSource_Accessor target = new MongoDataSource_Accessor();
+
+        string value = "blah";
+        object parsedValue = target.ParseConditionValue(value, DataType.DT_STR);
+
+        Assert.AreEqual(new BsonString(value), parsedValue);
+    }
+
+    /// <summary>
+    ///A test for ParseConditionValue
+    ///</summary>
+    [TestMethod()]
+    public void ParseConditionValueForDoubleTest() {
+        MongoDataSource_Accessor target = new MongoDataSource_Accessor();
+
+        string value = "12.34";
+        BsonDouble expected = new BsonDouble(Double.Parse(value));
+        object parsedValue = target.ParseConditionValue(value, DataType.DT_R8);
+
+        Assert.AreEqual(expected, parsedValue);
+
+        parsedValue = target.ParseConditionValue(value, DataType.DT_R4);
+
+        Assert.AreEqual(expected, parsedValue);
     }
 
 }

@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2012 Xbridge Ltd
  * See the file license.txt for copying permission.
  */
@@ -48,7 +48,6 @@ namespace MongoDataSource {
             set { _connectionString = value; }
         }
 
-
         private void UpdateConnectionString() {
             string temporaryString = CONNECTIONSTRING_TEMPLATE;
 
@@ -69,20 +68,29 @@ namespace MongoDataSource {
         public override Microsoft.SqlServer.Dts.Runtime.DTSExecResult Validate(Microsoft.SqlServer.Dts.Runtime.IDTSInfoEvents infoEvents) {
 
             if (string.IsNullOrEmpty(_serverName)) {
-                if (infoEvents != null) {
-                    infoEvents.FireError(0, "MongoConnectionManager", "No server name specified", string.Empty, 0);
-                }
-                return DTSExecResult.Failure;
+                return HandleValidationError(infoEvents, "No server name specified");
+            } else if(string.IsNullOrEmpty(_databaseName)) {
+                return HandleValidationError(infoEvents, "No database name specified");
+            } else if (string.IsNullOrEmpty(_password)) {
+                return HandleValidationError(infoEvents, "No password specified");
+            } else if (string.IsNullOrEmpty(_userName)) {
+                return HandleValidationError(infoEvents, "No username specified");
             } else {
                 return DTSExecResult.Success;
             }
 
         }
 
+        private Microsoft.SqlServer.Dts.Runtime.DTSExecResult HandleValidationError(Microsoft.SqlServer.Dts.Runtime.IDTSInfoEvents infoEvents, string message) {
+            if (infoEvents != null) {
+                infoEvents.FireError(0, "MongoConnectionManager", message, string.Empty, 0);
+            }
+            return DTSExecResult.Failure;
+        }
+
         public override object AcquireConnection(object txn) {
             MongoDatabase database = null;
-
-            if (_connectionString == null) {
+            if (string.IsNullOrEmpty(_connectionString)) {
                 UpdateConnectionString();
             }
 
@@ -100,7 +108,6 @@ namespace MongoDataSource {
 
             return database;
         }
-
 
         public override void ReleaseConnection(object connection) {
             if (connection != null) {
