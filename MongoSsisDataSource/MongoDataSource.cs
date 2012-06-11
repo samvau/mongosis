@@ -290,24 +290,46 @@ namespace MongoDataSource {
         private MongoDatabase GetDatabase(System.ComponentModel.ITypeDescriptorContext context) {
             MongoDatabase db = null;
 
-            PropertyInfo[] props = context.Instance.GetType().GetProperties();
+            Microsoft.SqlServer.Dts.Runtime.ConnectionManager cm = GetMongoDBConnectionManager(context);
+            if (cm != null) {
+                db = (MongoDatabase)cm.AcquireConnection(null);
+            }
 
-            foreach (PropertyInfo propInfo in props) {
-                if (propInfo.Name.Equals("PipelineTask")) {
-                    Microsoft.SqlServer.Dts.Runtime.EventsProvider ep = (Microsoft.SqlServer.Dts.Runtime.EventsProvider)propInfo.GetValue(context.Instance, null);
+            return db;
+        }
 
-                    Microsoft.SqlServer.Dts.Runtime.Package p = (Microsoft.SqlServer.Dts.Runtime.Package)ep.Parent;
+        private Microsoft.SqlServer.Dts.Runtime.ConnectionManager GetMongoDBConnectionManager(System.ComponentModel.ITypeDescriptorContext context) {
+            Microsoft.SqlServer.Dts.Runtime.Package package = GetPackageFromContext(context);
 
-                    foreach (Microsoft.SqlServer.Dts.Runtime.ConnectionManager cm in p.Connections) {
+            return GetMongoDBConnectionManager(package);
+        }
 
-                        if (cm.CreationName.Equals("MongoDB")) {
-                            db = (MongoDatabase)cm.AcquireConnection(null);
-                        }
+        private Microsoft.SqlServer.Dts.Runtime.ConnectionManager GetMongoDBConnectionManager(Microsoft.SqlServer.Dts.Runtime.Package package) {
+            if (package != null) {
+                foreach (Microsoft.SqlServer.Dts.Runtime.ConnectionManager cm in package.Connections) {
+                    if (cm.CreationName.Equals("MongoDB")) {
+                        return cm;
                     }
                 }
             }
 
-            return db;
+            return null;
+        }
+
+        private Microsoft.SqlServer.Dts.Runtime.Package GetPackageFromContext(System.ComponentModel.ITypeDescriptorContext context) {
+            Microsoft.SqlServer.Dts.Runtime.Package package = null;
+
+            PropertyInfo[] props = context.Instance.GetType().GetProperties();
+
+            foreach (PropertyInfo propInfo in props) {
+                if (propInfo.Name.Equals("PipelineTask")) {
+                    Microsoft.SqlServer.Dts.Runtime.EventsProvider eventsProvider = (Microsoft.SqlServer.Dts.Runtime.EventsProvider)propInfo.GetValue(context.Instance, null);
+
+                    package = (Microsoft.SqlServer.Dts.Runtime.Package)eventsProvider.Parent;
+                }
+            }
+
+            return package;
         }
 
         public override UITypeEditorEditStyle GetEditStyle(System.ComponentModel.ITypeDescriptorContext context) {
