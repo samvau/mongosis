@@ -10,7 +10,10 @@ using Microsoft.SqlServer.Dts.Pipeline.Wrapper;
 using Microsoft.SqlServer.Dts.Runtime.Wrapper;
 using MongoDB.Driver;
 using MongoDB.Bson;
-
+using System.Drawing.Design;
+using System.Windows.Forms;
+using System.Windows.Forms.Design;
+using System.Reflection;
 
 namespace MongoDataSource {
 
@@ -20,7 +23,7 @@ namespace MongoDataSource {
         private IDTSConnectionManager100 m_ConnMgr;
         private ArrayList columnInformation;
         private string _collectionName = string.Empty;
-        private MongoDatabase database;
+        internal MongoDatabase database;
 
         public string CollectionName {
             get { return _collectionName; }
@@ -31,9 +34,11 @@ namespace MongoDataSource {
             // Allow for resetting the component.
             RemoveAllInputsOutputsAndCustomProperties();
             ComponentMetaData.RuntimeConnectionCollection.RemoveAll();
+
             dynamic customProperty = ComponentMetaData.CustomPropertyCollection.New();
             customProperty.Name = "CollectionName";
-
+            customProperty.UITypeEditor = typeof(CollectionNameEditor).AssemblyQualifiedName;
+            
             IDTSOutput100 output = ComponentMetaData.OutputCollection.New();
             output.Name = "Output";
 
@@ -234,6 +239,14 @@ namespace MongoDataSource {
             }
         }
 
+
+        internal System.Collections.Generic.IEnumerable<string> GetCollectionNames() {
+            if (database == null) {
+                AcquireConnections(null);
+            }
+
+            return database.GetCollectionNames();
+        }
     }
 
     internal class ColumnInfo {
@@ -241,6 +254,70 @@ namespace MongoDataSource {
         internal int BufferColumnIndex;
         internal string ColumnName;
         internal DataType ColumnDataType;
+    }
+
+    internal class CollectionNameEditor : UITypeEditor {
+        private IWindowsFormsEditorService edSvc = null; 
+
+        public override object EditValue(System.ComponentModel.ITypeDescriptorContext context, IServiceProvider provider, object value) {
+            edSvc = (IWindowsFormsEditorService)provider.GetService(typeof(IWindowsFormsEditorService));
+            
+            if (edSvc != null) {
+                ListBox lb = new ListBox();
+                MongoDatabase database = GetDatabase(context);
+
+                if (database != null) {
+                    foreach (String name in database.GetCollectionNames()) {
+                        if (!name.StartsWith("system")) {
+                            lb.Items.Add(name);
+                        }
+                    }
+                } else {
+                    throw new Exception("No database connection found!");
+                }
+
+                lb.SelectionMode = SelectionMode.One;
+                lb.SelectedValueChanged += OnListBoxSelectedValueChanged;
+
+                edSvc.DropDownControl(lb);
+
+                if (lb.SelectedItem != null)
+                    return lb.SelectedItem;
+            }
+            return value;
+        }
+
+        private MongoDatabase GetDatabase(System.ComponentModel.ITypeDescriptorContext context) {
+            MongoDatabase db = null;
+
+            PropertyInfo[] props = context.Instance.GetType().GetProperties();
+
+            foreach (PropertyInfo propInfo in props) {
+                if (propInfo.Name.Equals("PipelineTask")) {
+                    Microsoft.SqlServer.Dts.Runtime.EventsProvider ep = (Microsoft.SqlServer.Dts.Runtime.EventsProvider)propInfo.GetValue(context.Instance, null);
+
+                    Microsoft.SqlServer.Dts.Runtime.Package p = (Microsoft.SqlServer.Dts.Runtime.Package)ep.Parent;
+
+                    foreach (Microsoft.SqlServer.Dts.Runtime.ConnectionManager cm in p.Connections) {
+
+                        if (cm.CreationName.Equals("MongoDB")) {
+                            db = (MongoDatabase)cm.AcquireConnection(null);
+                        }
+                    }
+                }
+            }
+
+            return db;
+        }
+
+        public override UITypeEditorEditStyle GetEditStyle(System.ComponentModel.ITypeDescriptorContext context) {
+            return UITypeEditorEditStyle.DropDown;
+        }
+
+        private void OnListBoxSelectedValueChanged(object sender, EventArgs e) {
+            // close the drop down as soon as something is clicked
+            edSvc.CloseDropDown();
+        }
     }
 
 }
