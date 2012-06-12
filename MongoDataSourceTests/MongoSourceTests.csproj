@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -78,11 +78,6 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Shadow Include="Test References\MongoSsisDataSource.accessor">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Shadow>
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\MongoSsisDataSource\MongoSsisDataSource.csproj">
       <Project>{EA2F5DA3-DF0C-49E3-958B-508A13D88729}</Project>
       <Name>MongoSsisDataSource</Name>
@@ -91,8 +86,6 @@
   <ItemGroup>
     <None Include="mongodatasource.snk" />
     <None Include="mongotests.snk" />
-  </ItemGroup>
-  <ItemGroup>
     <Shadow Include="Test References\MongoSsisDataSource.accessor" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
