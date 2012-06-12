@@ -68,14 +68,15 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Shadow Include="Test References\MongoSsisDataSource.accessor">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Shadow>
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\MongoSsisDataSource\MongoSsisDataSource.csproj">
       <Project>{EA2F5DA3-DF0C-49E3-958B-508A13D88729}</Project>
       <Name>MongoSsisDataSource</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup />
-  <ItemGroup>
-    <Shadow Include="Test References\MongoSsisDataSource.accessor" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
