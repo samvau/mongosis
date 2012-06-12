@@ -54,6 +54,7 @@ namespace MongoDataSource {
             customProperty.UITypeEditor = typeof(CollectionNameEditor).AssemblyQualifiedName;
             
             customProperty = createCustomProperty(customPropertyCollection, CONDITIONAL_FIELD_PROP_NAME, "Field name for conditional query");
+            customProperty.UITypeEditor = typeof(ColumnNameEditor).AssemblyQualifiedName;
 
             createCustomProperty(customPropertyCollection, CONDITION_FROM_PROP_NAME, "'From' value for conditional query");
             createCustomProperty(customPropertyCollection, CONDITION_TO_PROP_NAME, "'To' value for conditional query");
@@ -403,6 +404,103 @@ namespace MongoDataSource {
                     lb.Items.Add(name);
                 }
             }
+
+            lb.SelectionMode = SelectionMode.One;
+            lb.SelectedValueChanged += OnListBoxSelectedValueChanged;
+
+            return lb;
+        }
+
+        private MongoDatabase GetDatabase(System.ComponentModel.ITypeDescriptorContext context) {
+            MongoDatabase db = null;
+
+            Microsoft.SqlServer.Dts.Runtime.ConnectionManager cm = GetMongoDBConnectionManager(context);
+            if (cm != null) {
+                db = (MongoDatabase)cm.AcquireConnection(null);
+            }
+
+            return db;
+        }
+
+        private Microsoft.SqlServer.Dts.Runtime.ConnectionManager GetMongoDBConnectionManager(System.ComponentModel.ITypeDescriptorContext context) {
+            Microsoft.SqlServer.Dts.Runtime.Package package = GetPackageFromContext(context);
+
+            return GetMongoDBConnectionManager(package);
+        }
+
+        private Microsoft.SqlServer.Dts.Runtime.ConnectionManager GetMongoDBConnectionManager(Microsoft.SqlServer.Dts.Runtime.Package package) {
+            if (package != null) {
+                foreach (Microsoft.SqlServer.Dts.Runtime.ConnectionManager cm in package.Connections) {
+                    if (cm.CreationName.Equals(MongoDataSource.MONGODB_CONNECTION_MANAGER_NAME)) {
+                        return cm;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        private Microsoft.SqlServer.Dts.Runtime.Package GetPackageFromContext(System.ComponentModel.ITypeDescriptorContext context) {
+            Microsoft.SqlServer.Dts.Runtime.Package package = null;
+
+            PropertyInfo[] props = context.Instance.GetType().GetProperties();
+
+            foreach (PropertyInfo propInfo in props) {
+                if (propInfo.Name.Equals("PipelineTask")) {
+                    Microsoft.SqlServer.Dts.Runtime.EventsProvider eventsProvider = (Microsoft.SqlServer.Dts.Runtime.EventsProvider)propInfo.GetValue(context.Instance, null);
+
+                    package = (Microsoft.SqlServer.Dts.Runtime.Package)eventsProvider.Parent;
+                }
+            }
+
+            return package;
+        }
+
+        public override UITypeEditorEditStyle GetEditStyle(System.ComponentModel.ITypeDescriptorContext context) {
+            return UITypeEditorEditStyle.DropDown;
+        }
+
+        private void OnListBoxSelectedValueChanged(object sender, EventArgs e) {
+            // close the drop down as soon as something is clicked
+            edSvc.CloseDropDown();
+        }
+    }
+
+    internal class ColumnNameEditor : UITypeEditor {
+        private IWindowsFormsEditorService edSvc = null;
+
+        public override object EditValue(System.ComponentModel.ITypeDescriptorContext context, IServiceProvider provider, object value) {
+            edSvc = (IWindowsFormsEditorService)provider.GetService(typeof(IWindowsFormsEditorService));
+
+            if (edSvc != null) {
+                IDTSCustomProperty100 collectionNameProp = GetCollectionNameProp(context);
+                MongoDatabase database = GetDatabase(context);
+
+                if (database != null) {
+                    ListBox lb = BuildListBox(database);
+
+                    edSvc.DropDownControl(lb);
+
+                    if (lb.SelectedItem != null) {
+                        return lb.SelectedItem;
+                    }
+                } else {
+                    throw new Exception("No database connection found!");
+                }
+            }
+            return value;
+        }
+
+        private IDTSCustomProperty100 GetCollectionNameProp(System.ComponentModel.ITypeDescriptorContext context) {
+            //IDTSComp
+            return null;
+        }
+
+        private ListBox BuildListBox(MongoDatabase database) {
+            ListBox lb = new ListBox();
+
+            lb.Items.Add("columnA");
+            lb.Items.Add("columnB");
 
             lb.SelectionMode = SelectionMode.One;
             lb.SelectedValueChanged += OnListBoxSelectedValueChanged;
