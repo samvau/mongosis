@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2012 Xbridge Ltd
  * See the file license.txt for copying permission.
  */
@@ -290,6 +290,8 @@ public class MongoSourceTests {
         Mock.Arrange(() => customPropertyCollection.New()).Returns(queryProp).InSequence();
 
         assertSetPropertyNameAndDescription(collectionNameProp, MongoDataSource_Accessor.COLLECTION_NAME_PROP_NAME);
+        Mock.ArrangeSet(() => collectionNameProp.UITypeEditor = Arg.Matches<string>(x => x == typeof(CollectionNameEditor).AssemblyQualifiedName));
+
         assertSetPropertyNameAndDescription(conditionalFieldProp, MongoDataSource_Accessor.CONDITIONAL_FIELD_PROP_NAME);
         assertSetPropertyNameAndDescription(fromValueProp, MongoDataSource_Accessor.CONDITION_FROM_PROP_NAME);
         assertSetPropertyNameAndDescription(toValueProp, MongoDataSource_Accessor.CONDITION_TO_PROP_NAME);

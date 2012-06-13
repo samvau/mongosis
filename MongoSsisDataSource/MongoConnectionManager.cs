@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2012 Xbridge Ltd
  * See the file license.txt for copying permission.
  */
