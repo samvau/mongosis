@@ -24,7 +24,7 @@ namespace MongoDataSource {
         IconResource = "MongoDataSource.Resources.mongosis.ico")]
     public class MongoDataSource : PipelineComponent {
 
-        private static string COLLECTION_NAME_PROP_NAME = "CollectionName";
+        public static string COLLECTION_NAME_PROP_NAME = "CollectionName";
         private static string CONDITIONAL_FIELD_PROP_NAME = "ConditionalFieldName";
         private static string CONDITION_FROM_PROP_NAME = "ConditionFromValue";
         private static string CONDITION_TO_PROP_NAME = "ConditionToValue";
@@ -477,7 +477,7 @@ namespace MongoDataSource {
                 MongoDatabase database = GetDatabase(context);
 
                 if (database != null) {
-                    ListBox lb = BuildListBox(database);
+                    ListBox lb = BuildListBox(database, collectionNameProp.Value);
 
                     edSvc.DropDownControl(lb);
 
@@ -492,12 +492,13 @@ namespace MongoDataSource {
         }
 
         private IDTSCustomProperty100 GetCollectionNameProp(System.ComponentModel.ITypeDescriptorContext context) {
-            //IDTSComp
-            return null;
+            return GetComponentMetaDataFromContext(context).CustomPropertyCollection[MongoDataSource.COLLECTION_NAME_PROP_NAME];
         }
 
-        private ListBox BuildListBox(MongoDatabase database) {
+        private ListBox BuildListBox(MongoDatabase database, String collectionName) {
             ListBox lb = new ListBox();
+
+            database.GetCollection(collectionName);
 
             lb.Items.Add("columnA");
             lb.Items.Add("columnB");
@@ -538,19 +539,32 @@ namespace MongoDataSource {
         }
 
         private Microsoft.SqlServer.Dts.Runtime.Package GetPackageFromContext(System.ComponentModel.ITypeDescriptorContext context) {
-            Microsoft.SqlServer.Dts.Runtime.Package package = null;
+
+            Microsoft.SqlServer.Dts.Runtime.EventsProvider eventsProvider = (Microsoft.SqlServer.Dts.Runtime.EventsProvider)GetObjectFromContext(context, "PipelineTask");
+
+            if (eventsProvider != null) {
+                return (Microsoft.SqlServer.Dts.Runtime.Package)eventsProvider.Parent;
+            } else {
+                return null;
+            }
+        }
+
+        private IDTSComponentMetaData100 GetComponentMetaDataFromContext(System.ComponentModel.ITypeDescriptorContext context) {
+            return (IDTSComponentMetaData100)GetObjectFromContext(context, "dtsComponentMetaData");
+        }
+
+        private object GetObjectFromContext(System.ComponentModel.ITypeDescriptorContext context, string objName) {
+            object obj = null;
 
             PropertyInfo[] props = context.Instance.GetType().GetProperties();
 
             foreach (PropertyInfo propInfo in props) {
-                if (propInfo.Name.Equals("PipelineTask")) {
-                    Microsoft.SqlServer.Dts.Runtime.EventsProvider eventsProvider = (Microsoft.SqlServer.Dts.Runtime.EventsProvider)propInfo.GetValue(context.Instance, null);
-
-                    package = (Microsoft.SqlServer.Dts.Runtime.Package)eventsProvider.Parent;
+                if (propInfo.Name.Equals(objName)) {
+                    return propInfo.GetValue(context.Instance, null);
                 }
             }
 
-            return package;
+            return obj;
         }
 
         public override UITypeEditorEditStyle GetEditStyle(System.ComponentModel.ITypeDescriptorContext context) {
