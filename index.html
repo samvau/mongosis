@@ -3,9 +3,12 @@
 		<title>Mongosis by Simply Business</title>
 		<link href="css/bootstrap.css" media="screen" rel="stylesheet" type="text/css"/>
 		<link href="css/bootstrap-responsive.css" media="screen" rel="stylesheet" type="text/css"/>
-		<link href="css/customisations.css" media="screen" rel="stylesheet" type="text/css"/>
+		<link href="css/lightbox.css" rel="stylesheet" />
+		<link href="css/customisations.css" media="screen" rel="stylesheet" type="text/css"/>	
+		<script src="js/googleanalytics.js" type="text/javascript"></script>
 		<script src="js/jquery-1.7.2.min.js" type="text/javascript"></script>
 		<script src="js/bootstrap.js" type="text/javascript"></script>
+		<script src="js/lightbox.js"></script>
 		<script>
 		  $(document).ready(function() {
 	    	  $("#guide-tabs").tabs();
@@ -45,20 +48,20 @@
 				<ul class="thumbnails">
 					<li class="span1"></li>
 					<li class="span3">
-						<a class="thumbnail" href="#" target="_blank">
+						<a class="thumbnail" href="img/screen.png" rel="lightbox[mongosis]">
         					<img src="img/screen.png" alt="Connect">
       					</a>
       					<p align="center">Connect.</p>
 					</li>
 					<li class="span3">
-						<a class="thumbnail" href="#" target="_blank">
-        					<img src="img/screen.png" alt="Connect">
+						<a class="thumbnail" href="img/screen2.png" rel="lightbox[mongosis]">
+        					<img src="img/screen2.png" alt="Connect">
       					</a>
       					<p align="center">Configure.</p>
 					</li>
 					<li class="span3">
-						<a class="thumbnail" href="#" target="_blank">
-        					<img src="img/screen.png" alt="Connect">
+						<a class="thumbnail" href="img/screen3.png" rel="lightbox[mongosis]">
+        					<img src="img/screen3.png" alt="Connect">
       					</a>
       					<p align="center">Export.</p>
 					</li>
@@ -70,6 +73,7 @@
 			    <ul id="guide-tabs" class="nav nav-tabs" data-tabs="tabs">
 			        <li class="active"><a href="#installation" data-toggle="tab">Installation</a></li>
 			        <li><a href="#requirements" data-toggle="tab">Requirements</a></li>
+			        <li><a href="#gettingstarted" data-toggle="tab">Getting Started</a></li>
 		        </ul>
 			    <div id="my-tab-content" class="tab-content">
 			        <div class="tab-pane active" id="installation">
@@ -87,12 +91,95 @@
 			        <div class="tab-pane" id="requirements">
 			            <h2>Requirements</h2>
 						<ul>
-							<li><p>Microsoft <a href="http://www.microsoft.com/visualstudio/en-us/products/2010-editions">Visual Studio</a> 2010</p></li>
+							<li><p>Microsoft <a href="http://www.microsoft.com/visualstudio/en-us/products/2010-editions">Visual Studio</a> 2010 <i>(SQL Server Data Tools)</i></p></li>
 							<li><p>The <a href="https://github.com/mongodb/mongo-csharp-driver/downloads">MongoDB C# Driver</a></p></li>
 						</ul>
 			        </div>
+			        <div class="tab-pane" id="gettingstarted">
+			            <h2>Getting Started</h2>
+						<ol>
+							<li><p>Start or open your Integration Services project:</p>
+								<div class="tutorial-thumb">
+									<a class="thumbnail" href="img/tutorial/1.png" rel="lightbox[tutorial]" title="Open SSIS">
+		        						<img src="img/tutorial/1.png" alt="Open SSIS">
+		      						</a>
+	      						</div>
+      						</li>
+							<li>
+								<p>On the <code>Data Flow</code> tab, drag a MongoDB Source from the toolbox to the work area:</p>
+								<div class="tutorial-thumb">
+									<a class="thumbnail" href="img/tutorial/2.png" rel="lightbox[tutorial]" title="Add Mongo Data Source">
+		        						<img src="img/tutorial/2.png" alt="Add Mongo Data Source">
+		      						</a>
+	      						</div>
+							</li>
+							<li>
+								<p>In the solution explorer for your project, right click the Connection Managers folder.</p>
+								<div class="tutorial-thumb">
+									<a class="thumbnail" href="img/tutorial/3.png" rel="lightbox[tutorial]" title="Right click Connection Managers">
+		        						<img src="img/tutorial/3.png" alt="Right click Connection Managers">
+		      						</a>
+	      						</div>
+							</li>
+							<li>
+								<p>Select <code>New Connection Manager</code> and choose MongoDB.</p>
+								<div class="tutorial-thumb">
+									<a class="thumbnail" href="img/tutorial/4.png" rel="lightbox[tutorial]" title="MongoDB Connection Manager">
+		        						<img src="img/tutorial/4.png" alt="MongoDB Connection Manager">
+		      						</a>
+	      						</div>
+							</li>
+							<li>
+								<p>In the Connection Managers tab, select the new MongoDB connection manager.</p>
+								<div class="tutorial-thumb">
+									<a class="thumbnail" href="img/tutorial/5.png" rel="lightbox[tutorial]" title="Select the new manager">
+		        						<img src="img/tutorial/5.png" alt="Select the new manager">
+		      						</a>
+	      						</div>
+							</li>
+							<li>
+								<p>In the properties tab, enter the <code>DatabaseName</code>, <code>ServerName</code>, <code>UserName</code> and <code>Password</code>for your Mongo database.</p>
+								<div class="tutorial-thumb">
+									<a class="thumbnail" href="img/tutorial/6.png" rel="lightbox[tutorial]" title="Enter credentials">
+		        						<img src="img/tutorial/6.png" alt="Enter credentials">
+		      						</a>
+	      						</div>
+							</li>
+							<li>
+								<p>Double click the icon on your MongoDB Source in the work area to open up the Advanced Editor.</p>
+								<div class="tutorial-thumb">
+									<a class="thumbnail" href="img/tutorial/7.png" rel="lightbox[tutorial]" title="Open Advanced Editor">
+		        						<img src="img/tutorial/7.png" alt="Open Advanced Editor">
+		      						</a>
+	      						</div>
+							</li>
+							<li>
+								<p>On the <code>Connection Managers</code> tab, select the MongoDBConnectionManager as the connection manager.</p>
+								<div class="tutorial-thumb">
+									<a class="thumbnail" href="img/tutorial/8.png" rel="lightbox[tutorial]" title="Select connection manager">
+		        						<img src="img/tutorial/8.png" alt="Select connection manager">
+		      						</a>
+	      						</div>
+							</li>
+							<li>
+								<p>On the <code>Component Properties</code> tab, under <code>Custom Properties</code>, select the <code>CollectionName</code> corresponding to the Mongo collection you wish to get data from. <i>(Note this requires that the Connection Manager details set earlier are correct)</i></p>
+								<div class="tutorial-thumb">
+									<a class="thumbnail" href="img/tutorial/9.png" rel="lightbox[tutorial]" title="Select the collection">
+		        						<img src="img/tutorial/9.png" alt="Select the collection">
+		      						</a>
+	      						</div>
+							</li>
+							<li>
+								<p>If this has been configured correctly, you should be able to see the available fields for the collection on the <code>Column Mappings</code> tab.</p>
+								<div class="tutorial-thumb">
+									<a class="thumbnail" href="img/tutorial/10.png" rel="lightbox[tutorial]" title="See available fields">
+		        						<img src="img/tutorial/10.png" alt="See available fields">
+		      						</a>
+	      						</div>
+							</li>
+						</ol>
+			        </div>
 			    </div>
-
 				<hr class="soften" />
 		        <footer class="footer">
 	    		    <p class="pull-right"><a href="#">Back to top</a></p>

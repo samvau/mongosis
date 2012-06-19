@@ -99,3 +99,7 @@ hr.soften {
 .tab-pane li {
 	margin: 0.5em;
 }
+
+div .tutorial-thumb {
+	width: 25em;
+}
