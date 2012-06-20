@@ -3,10 +3,9 @@
 		<title>Mongosis by Simply Business</title>
 		<link href="css/bootstrap.css" media="screen" rel="stylesheet" type="text/css"/>
 		<link href="css/bootstrap-responsive.css" media="screen" rel="stylesheet" type="text/css"/>
-		<link href="css/customisations.css" media="screen" rel="stylesheet" type="text/css"/>
-	    <link href="css/lightbox.css" rel="stylesheet" />
-	    <link href="css/customisations.css" media="screen" rel="stylesheet" type="text/css"/> 
-	    
+		<link href="css/lightbox.css" rel="stylesheet" />
+		<link href="css/customisations.css" media="screen" rel="stylesheet" type="text/css"/>	
+		<script src="js/googleanalytics.js" type="text/javascript"></script>
 		<script src="js/jquery-1.7.2.min.js" type="text/javascript"></script>
 		<script src="js/bootstrap.js" type="text/javascript"></script>
 		<script src="js/lightbox.js"></script>
@@ -15,19 +14,6 @@
 	    	  $("#guide-tabs").tabs();
 		  });
 	  </script>
-	  
-	  <script type="text/javascript">
-		  var _gaq = _gaq || [];
-		  _gaq.push(['_setAccount', 'UA-8804762-3']);
-		  _gaq.push(['_trackPageview']);
-		
-		  (function() {
-		    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-		    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-		    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-		  })();
-	</script>
-	  
 	</head>
 	<body>
 		<div class="container">
@@ -40,53 +26,161 @@
 						<img src="img/logo.png">
 					</div>
 					<div class="inner inline">
-						<h1><span class="green">Mongo</span><span class="red">sis</span> <!--span id="header-from">from</span> <img src="img/sb_logo.png" /--> </h1>
+						<h1><span class="green">Mongo</span><span class="red">sis</span></h1>
 						<br/><br/>
 						<p>Custom components for integrating MongoDB and Microsoft SQL Server Integration Services (SSIS)</p>
 						<br/>
-						<div style="text-align:center;">
-							<p>
-								<a class="btn btn-success btn-large">Coming Soon...</a>
-							</p>
-							<ul class="quick-links">
-								<li class="follow-btn">
-									<iframe allowtransparency="true" frameborder="0" scrolling="no" src="http://platform.twitter.com/widgets/follow_button.1338995330.html#_=1339160695082&amp;id=twitter-widget-2&amp;lang=en&amp;screen_name=TechSB&amp;show_count=true&amp;show_screen_name=true&amp;size=m" class="twitter-follow-button" style="width: 236px; height: 20px; " title="Twitter Follow Button"></iframe>
-								</li>
-				            </ul>
-			            </div>
+						<p>
+							<a class="btn btn-success btn-large" href="assets/mongosis-latest.msi">Download Mongosis</a>
+							<a class="btn btn btn-large disabled" href="#">View on Github <i>(Coming soon)</i> &raquo;</a>
+						</p>
+						<ul class="quick-links" style="margin-left:8em;">
+							<!--li><iframe class="github-btn" src="http://markdotto.github.com/github-buttons/github-btn.html?user=simplybusiness&amp;repo=mongosis&amp;type=watch&amp;count=true" allowtransparency="true" frameborder="0" scrolling="0" width="112px" height="20px"></iframe></li>
+							<li><iframe class="github-btn" src="http://markdotto.github.com/github-buttons/github-btn.html?user=simplybusiness&amp;repo=mongosis&amp;type=fork&amp;count=true" allowtransparency="true" frameborder="0" scrolling="0" width="112px" height="20px"></iframe></li-->
+							<li class="follow-btn"><iframe allowtransparency="true" frameborder="0" scrolling="no" src="http://platform.twitter.com/widgets/follow_button.1338995330.html#_=1339160695082&amp;id=twitter-widget-2&amp;lang=en&amp;screen_name=TechSB&amp;show_count=true&amp;show_screen_name=true&amp;size=m" class="twitter-follow-button" style="width: 236px; height: 20px; " title="Twitter Follow Button"></iframe></li>
+							<li class="tweet-btn"><iframe allowtransparency="true" frameborder="0" scrolling="no" src="http://platform.twitter.com/widgets/tweet_button.1338995330.html#_=1339160695079&amp;count=horizontal&amp;id=twitter-widget-0&amp;lang=en&amp;original_referer=http%3A%2F%2Fsimplybusiness.github.com%2Fmongosis%2F&amp;size=m&amp;text=I%27m%20using%20Mongosis%20by%20Simply%20Business%2E%20Check%20it%20out%3A&amp;url=http%3A%2F%2Fsimplybusiness.github.com%2Fmongosis%2F&amp;via=TechSB" class="twitter-share-button twitter-count-horizontal" style="width: 107px; height: 20px; " title="Twitter Tweet Button"></iframe></li>
+						</ul>
 					</div>
 				</div>
 				<hr class="soften" />
 				<br/>
-		        <br/>
-		        <ul class="thumbnails">
-		          <li class="span1"></li>
-		          <li class="span3">
-		            <a class="thumbnail" href="img/screen.png" rel="lightbox[mongosis]" title="Connect">
-		                  <img src="img/screen.png" alt="Connect">
-		                </a>
-		                <p align="center">Connect.</p>
-		          </li>
-		          <li class="span3">
-		            <a class="thumbnail" href="img/screen2.png" rel="lightbox[mongosis]" title="Configure">
-		                  <img src="img/screen2.png" alt="Configure">
-		                </a>
-		                <p align="center">Configure.</p>
-		          </li>
-		          <li class="span3">
-		            <a class="thumbnail" href="img/screen3.png" rel="lightbox[mongosis]" title="Export">
-		                  <img src="img/screen3.png" alt="Export">
-		                </a>
-		                <p align="center">Export.</p>
-		          </li>
+				<br/>
+				<ul class="thumbnails">
+					<li class="span1"></li>
+					<li class="span3">
+						<a class="thumbnail" href="img/screen.png" rel="lightbox[mongosis]" title="Connect">
+        					<img src="img/screen.png" alt="Connect">
+      					</a>
+      					<p align="center">Connect.</p>
+					</li>
+					<li class="span3">
+						<a class="thumbnail" href="img/screen2.png" rel="lightbox[mongosis]" title="Configure">
+        					<img src="img/screen2.png" alt="Configure">
+      					</a>
+      					<p align="center">Configure.</p>
+					</li>
+					<li class="span3">
+						<a class="thumbnail" href="img/screen3.png" rel="lightbox[mongosis]" title="Export">
+        					<img src="img/screen3.png" alt="Export">
+      					</a>
+      					<p align="center">Export.</p>
+					</li>
+				</ul>
+				<hr class="soften"/>
+				<p>Mongosis provides a means to read data from MongoDB within SSIS via custom data source and connection manager components. Available collection fields are automatically detected and added as output fields ready to be piped in to any of the standard SSIS destination components.</p>
+				<hr class="soften" />
+				
+			    <ul id="guide-tabs" class="nav nav-tabs" data-tabs="tabs">
+			        <li class="active"><a href="#installation" data-toggle="tab">Installation</a></li>
+			        <li><a href="#requirements" data-toggle="tab">Requirements</a></li>
+			        <li><a href="#gettingstarted" data-toggle="tab">Getting Started</a></li>
 		        </ul>
-		        <hr class="soften"/>
-		        <p>Mongosis provides a means to read data from MongoDB within SSIS via custom data source and connection manager components. Available collection fields are automatically detected and added as output fields ready to be piped in to any of the standard SSIS destination components.</p>
-		        <hr class="soften" />
+			    <div id="my-tab-content" class="tab-content">
+			        <div class="tab-pane active" id="installation">
+			            <h2>Installation</h2>
+						<ol>
+							<li><p><a href="assets/mongosis-latest.msi">Download</a> the Mongosis Installer</p></li>
+							<li><p>Run the installer.</p></li>
+							<li><p>You're ready to go!</p></li>
+						</ol>
+			        </div>
+			        <div class="tab-pane" id="requirements">
+			            <h2>Requirements</h2>
+						<ul>
+							<li><p>Microsoft <a href="http://www.microsoft.com/visualstudio/en-us/products/2010-editions">Visual Studio</a> 2010 <i>(SQL Server Data Tools)</i></p></li>
+							<li><p>The <a href="https://github.com/mongodb/mongo-csharp-driver/downloads">MongoDB C# Driver</a></p></li>
+						</ul>
+			        </div>
+			        <div class="tab-pane" id="gettingstarted">
+			            <h2>Getting Started</h2>
+						<ol>
+							<li><p>Start or open your Integration Services project:</p>
+								<div class="tutorial-thumb">
+									<a class="thumbnail" href="img/tutorial/1.png" rel="lightbox[tutorial]" title="Open SSIS">
+		        						<img src="img/tutorial/1.png" alt="Open SSIS">
+		      						</a>
+	      						</div>
+      						</li>
+							<li>
+								<p>On the <code>Data Flow</code> tab, drag a MongoDB Source from the toolbox to the work area:</p>
+								<div class="tutorial-thumb">
+									<a class="thumbnail" href="img/tutorial/2.png" rel="lightbox[tutorial]" title="Add Mongo Data Source">
+		        						<img src="img/tutorial/2.png" alt="Add Mongo Data Source">
+		      						</a>
+	      						</div>
+							</li>
+							<li>
+								<p>In the solution explorer for your project, right click the Connection Managers folder.</p>
+								<div class="tutorial-thumb">
+									<a class="thumbnail" href="img/tutorial/3.png" rel="lightbox[tutorial]" title="Right click Connection Managers">
+		        						<img src="img/tutorial/3.png" alt="Right click Connection Managers">
+		      						</a>
+	      						</div>
+							</li>
+							<li>
+								<p>Select <code>New Connection Manager</code> and choose MongoDB.</p>
+								<div class="tutorial-thumb">
+									<a class="thumbnail" href="img/tutorial/4.png" rel="lightbox[tutorial]" title="MongoDB Connection Manager">
+		        						<img src="img/tutorial/4.png" alt="MongoDB Connection Manager">
+		      						</a>
+	      						</div>
+							</li>
+							<li>
+								<p>In the Connection Managers tab, select the new MongoDB connection manager.</p>
+								<div class="tutorial-thumb">
+									<a class="thumbnail" href="img/tutorial/5.png" rel="lightbox[tutorial]" title="Select the new manager">
+		        						<img src="img/tutorial/5.png" alt="Select the new manager">
+		      						</a>
+	      						</div>
+							</li>
+							<li>
+								<p>In the properties tab, enter the <code>DatabaseName</code>, <code>ServerName</code>, <code>UserName</code> and <code>Password</code>for your Mongo database.</p>
+								<div class="tutorial-thumb">
+									<a class="thumbnail" href="img/tutorial/6.png" rel="lightbox[tutorial]" title="Enter credentials">
+		        						<img src="img/tutorial/6.png" alt="Enter credentials">
+		      						</a>
+	      						</div>
+							</li>
+							<li>
+								<p>Double click the icon on your MongoDB Source in the work area to open up the Advanced Editor.</p>
+								<div class="tutorial-thumb">
+									<a class="thumbnail" href="img/tutorial/7.png" rel="lightbox[tutorial]" title="Open Advanced Editor">
+		        						<img src="img/tutorial/7.png" alt="Open Advanced Editor">
+		      						</a>
+	      						</div>
+							</li>
+							<li>
+								<p>On the <code>Connection Managers</code> tab, select the MongoDBConnectionManager as the connection manager.</p>
+								<div class="tutorial-thumb">
+									<a class="thumbnail" href="img/tutorial/8.png" rel="lightbox[tutorial]" title="Select connection manager">
+		        						<img src="img/tutorial/8.png" alt="Select connection manager">
+		      						</a>
+	      						</div>
+							</li>
+							<li>
+								<p>On the <code>Component Properties</code> tab, under <code>Custom Properties</code>, select the <code>CollectionName</code> corresponding to the Mongo collection you wish to get data from. <i>(Note this requires that the Connection Manager details set earlier are correct)</i></p>
+								<div class="tutorial-thumb">
+									<a class="thumbnail" href="img/tutorial/9.png" rel="lightbox[tutorial]" title="Select the collection">
+		        						<img src="img/tutorial/9.png" alt="Select the collection">
+		      						</a>
+	      						</div>
+							</li>
+							<li>
+								<p>If this has been configured correctly, you should be able to see the available fields for the collection on the <code>Column Mappings</code> tab.</p>
+								<div class="tutorial-thumb">
+									<a class="thumbnail" href="img/tutorial/10.png" rel="lightbox[tutorial]" title="See available fields">
+		        						<img src="img/tutorial/10.png" alt="See available fields">
+		      						</a>
+	      						</div>
+							</li>
+						</ol>
+			        </div>
+			    </div>
+				<hr class="soften" />
 		        <footer class="footer">
 	    		    <p class="pull-right"><a href="#">Back to top</a></p>
 			        <p>Built by the <a href="http://twitter.com/simplybusiness" target="_blank">@simplybusiness</a> tech crew <a href="http://twitter.com/TechSB" target="_blank">(@TechSB)</a>.</p>
-	        		<p>Code licensed under the <a href="http://en.wikipedia.org/wiki/MIT_License" target="_blank">MIT License</a>.</p>
+	        		<p>Code licensed under the <a href="http://en.wikipedia.org/wiki/MIT_License" target="_blank">MIT License</a>. Feel free to <a href="mailto:mongosis@simplybusiness.co.uk">contact us</a> for info and feedback.</p>
 	      		</footer>
 			</div>      
 		</div>      
