@@ -16,6 +16,8 @@ http://www.telerik.com/freemocking.aspx
 
 ## Deployment
 
+Mongosis has an installer which makes deployment very easy, however if you wish to deploy manually then do the following:
+
 * Copy DLL file to:
 	* C:\Program Files (x86)\Microsoft SQL Server\110\DTS\PiplineComponents
 	* C:\Program Files (x86)\Microsoft SQL Server\110\DTS\Connections
