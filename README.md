@@ -41,3 +41,7 @@ http://www.telerik.com/freemocking.aspx
 
 * Ensure that 'Run64BitRuntime' option in SSIS project Configuration/Debugging properties is set to 'False'.
 * If you're running the 32-bit version of Windows there is no 'Program Files(x86)' so deploy to folders under 'Program Files' instead.
+
+## Contact:
+
+The contact for this project is <a href="mailto:mongosis@simplybusiness.co.uk">mongosis@simplybusiness.co.uk</a>
