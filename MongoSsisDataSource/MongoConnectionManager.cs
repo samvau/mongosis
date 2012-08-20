@@ -20,6 +20,7 @@ namespace MongoDataSource {
         private string _connectionString = string.Empty;
 
         private const string CONNECTIONSTRING_TEMPLATE = "mongodb://<username>:<password>@<servername>";
+        
         public string ServerName {
             get { return _serverName; }
             set { _serverName = value; }
@@ -40,6 +41,8 @@ namespace MongoDataSource {
             set { _password = value; }
         }
 
+        public bool SlaveOk { get; set; }
+
         public override string ConnectionString {
             get {
                 UpdateConnectionString();
@@ -59,6 +62,10 @@ namespace MongoDataSource {
             }
             if (!string.IsNullOrEmpty(_password)) {
                 temporaryString = temporaryString.Replace("<password>", _password);
+            }
+
+            if (SlaveOk) {
+                temporaryString = temporaryString + "/?connect=direct;slaveok=true";
             }
 
             _connectionString = temporaryString;
