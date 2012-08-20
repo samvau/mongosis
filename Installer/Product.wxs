@@ -1,0 +1,69 @@
+<?xml version="1.0"?>
+<?define ProductVersion = "1.1.0"?>
+<?define ProductUpgradeCode = "2E3B12D9-FC5E-4D96-8E7A-1AB810E735CF"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Product Id="*" UpgradeCode="$(var.ProductUpgradeCode)"
+            Name="Mongosis" Version="$(var.ProductVersion)" Manufacturer="Simply Business" Language="1033">
+    <Package InstallerVersion="200" Compressed="yes" Comments="Windows Installer Package"/>
+
+    <Media Id="1" Cabinet="media1.cab" EmbedCab="yes" />
+
+    <Upgrade Id="$(var.ProductUpgradeCode)">
+      <UpgradeVersion Minimum="$(var.ProductVersion)" OnlyDetect="yes" IncludeMinimum="no" Property="NEWERVERSIONDETECTED"/>
+      <UpgradeVersion Minimum="0.0.0" Maximum="$(var.ProductVersion)" IncludeMinimum="yes" IncludeMaximum="no"
+              Property="OLDERVERSIONBEINGUPGRADED"/>
+    </Upgrade>
+    <Condition Message="A newer version of this software is already installed.">NOT NEWERVERSIONDETECTED</Condition>
+
+    <Icon Id="ProductIcon" SourceFile="mongosis.ico"/>
+    <Property Id="ARPPRODUCTICON" Value="ProductIcon"/>
+    <Property Id="ARPHELPLINK" Value="http://www.github.com/simplybusiness/mongosis"/>
+    <Property Id="ARPURLINFOABOUT" Value="http://simplybusiness.github.com/mongosis"/>
+    <Property Id="ARPNOREPAIR" Value="1"/>
+
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFilesFolder">
+        <Directory Id="SqlServerFolder" Name="Microsoft SQL Server">
+          <Directory Id="version110" Name="110">
+            <Directory Id="INSTALLDIR" Name="DTS">
+              <Directory Id="GacLoc" Name="GacLoc">
+                <Component Id="GacDll" Guid="7401c2bf-af7d-4e4f-a226-7d410d1ff529">
+                  <File Id="MongosisDllGac" Source="MongoSsisDataSource.dll" Name="MongoSsisDataSource.dll" Assembly=".net" KeyPath="yes"/>
+                </Component>
+              </Directory>
+              <Directory Id="PipelineComponents" Name="PipelineComponents">
+                <Component Id="PipelineDll" Guid="39DA2488-77BB-4FEB-A68F-671FAD078C5E">
+                  <File Id="MongosisDll1" Source="MongoSsisDataSource.dll" Name="MongoSsisDataSource.dll" />
+                </Component>
+              </Directory>
+              <Directory Id="Connections" Name="Connections">
+                <Component Id="ConnectionDll" Guid="AFDF61E9-525C-45AC-BA71-9775AF752FCD">
+                  <File Id="MongosisDll2" Source="MongoSsisDataSource.dll" Name="MongoSsisDataSource.dll" />
+                </Component>
+              </Directory>
+            </Directory>
+          </Directory>
+        </Directory>
+      </Directory>
+    </Directory>
+
+    <InstallExecuteSequence>
+      <RemoveExistingProducts After="InstallValidate"/>
+    </InstallExecuteSequence>
+
+    <Feature Id="GacFeature" Level="1">
+      <ComponentRef Id="GacDll"/>
+    </Feature>
+    <Feature Id="PipelineFeature" Level="1">
+      <ComponentRef Id="PipelineDll"/>
+    </Feature>
+    <Feature Id="ConnectionFeature" Level="1">
+      <ComponentRef Id="ConnectionDll"/>
+    </Feature>
+
+    <UIRef Id="WixUI_Minimal"/>
+    <WixVariable Id="WixUILicenseRtf" Value="license.rtf" />
+    <WixVariable Id="WixUIDialogBmp" Value="installerbg.bmp" />
+    <WixVariable Id="WixUIBannerBmp" Value="installerban.bmp" />
+  </Product>
+</Wix>
