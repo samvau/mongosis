@@ -10,3 +10,6 @@ Local.testsettings
 MongoDataSourceTests/bin/
 MongoDataSourceTests/Test References/
 MongoDataSourceTests/obj/
+Installer/bin/
+Installer/obj/
+Installer/MongoSsisDataSource.dll

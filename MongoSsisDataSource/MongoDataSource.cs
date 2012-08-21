@@ -221,7 +221,7 @@ namespace MongoDataSource {
                     ColumnInfo ci = (ColumnInfo)columnInformation[x];
 
                     try {
-                        if (document[ci.ColumnName] != null) {
+                        if (document.Contains(ci.ColumnName) && document[ci.ColumnName] != null) {
                             if (document.GetValue(ci.ColumnName).IsBsonNull) {
                                 buffer.SetNull(ci.BufferColumnIndex);
                             } else {
