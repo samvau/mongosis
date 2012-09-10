@@ -124,16 +124,13 @@ namespace MongoDataSource {
             // Walk the columns in the schema, 
             // and for each data column create an output column and an external metadata column.
             foreach (BsonElement bsonElement in document) {
+                IDTSOutputColumn100 outColumn = BuildOutputColumn(output.OutputColumnCollection, bsonElement);
 
-                if (!bsonElement.Name.Equals("_id")) {
-                    IDTSOutputColumn100 outColumn = BuildOutputColumn(output.OutputColumnCollection, bsonElement);
+                IDTSExternalMetadataColumn100 externalColumn = output.ExternalMetadataColumnCollection.New();
+                PopulateExternalMetadataColumn(externalColumn, outColumn);
 
-                    IDTSExternalMetadataColumn100 externalColumn = output.ExternalMetadataColumnCollection.New();
-                    PopulateExternalMetadataColumn(externalColumn, outColumn);
-
-                    // Map the external column to the output column.
-                    outColumn.ExternalMetadataColumnID = externalColumn.ID;
-                }
+                // Map the external column to the output column.
+                outColumn.ExternalMetadataColumnID = externalColumn.ID;
             }
         }
 
