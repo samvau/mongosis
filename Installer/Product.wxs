@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<?define ProductVersion = "1.1.0"?>
+<?define ProductVersion = "1.2.0"?>
 <?define ProductUpgradeCode = "2E3B12D9-FC5E-4D96-8E7A-1AB810E735CF"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
   <Product Id="*" UpgradeCode="$(var.ProductUpgradeCode)"
@@ -50,7 +50,7 @@
     <InstallExecuteSequence>
       <RemoveExistingProducts After="InstallValidate"/>
     </InstallExecuteSequence>
-
+  
     <Feature Id="GacFeature" Level="1">
       <ComponentRef Id="GacDll"/>
     </Feature>
