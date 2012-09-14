@@ -18,8 +18,8 @@ using System.Reflection;
 
 namespace MongoDataSource {
 
-    [DtsPipelineComponent(DisplayName = "MongoDB Source", 
-        Description = "Mongosis - Loads data from a MongoDB data source", 
+    [DtsPipelineComponent(DisplayName = "MongoDB Source",
+        Description = "Mongosis - Loads data from a MongoDB data source",
         ComponentType = ComponentType.SourceAdapter,
         IconResource = "MongoDataSource.Resources.mongosis.ico")]
     public class MongoDataSource : PipelineComponent {
@@ -41,7 +41,7 @@ namespace MongoDataSource {
             ComponentMetaData.RuntimeConnectionCollection.RemoveAll();
 
             AddCustomProperties(ComponentMetaData.CustomPropertyCollection);
-            
+
             IDTSOutput100 output = ComponentMetaData.OutputCollection.New();
             output.Name = "Output";
 
@@ -52,7 +52,7 @@ namespace MongoDataSource {
         private void AddCustomProperties(IDTSCustomPropertyCollection100 customPropertyCollection) {
             IDTSCustomProperty100 customProperty = createCustomProperty(customPropertyCollection, COLLECTION_NAME_PROP_NAME, "Name of collection to import data from");
             customProperty.UITypeEditor = typeof(CollectionNameEditor).AssemblyQualifiedName;
-            
+
             customProperty = createCustomProperty(customPropertyCollection, CONDITIONAL_FIELD_PROP_NAME, "Field name for conditional query");
 
             createCustomProperty(customPropertyCollection, CONDITION_FROM_PROP_NAME, "'From' value for conditional query");
@@ -121,16 +121,28 @@ namespace MongoDataSource {
 
             BsonDocument document = collection.FindOne();
 
-            // Walk the columns in the schema, 
+            // Walk the columns in the schema,
             // and for each data column create an output column and an external metadata column.
             foreach (BsonElement bsonElement in document) {
-                IDTSOutputColumn100 outColumn = BuildOutputColumn(output.OutputColumnCollection, bsonElement);
+
+                // Try to find a document that has a [non null] value for the particular column.
+                BsonDocument documentWithNonNullElementValue = collection.FindOne(Query.NE(bsonElement.Name, BsonNull.Value));
+
+                // If a document is found with a value for the element, use the element with the non-null value
+                // instead of the original, which may or may not have a value. This will help to ensure that
+                // a column will not be treated as a string just because some of its values were null.
+                BsonElement bsonElementWithValue = null;
+                if (documentWithNonNullElementValue != null)
+                    bsonElementWithValue = documentWithNonNullElementValue.GetElement(bsonElement.Name);
+
+                IDTSOutputColumn100 outColumn = BuildOutputColumn(output.OutputColumnCollection, bsonElementWithValue ?? bsonElement);
 
                 IDTSExternalMetadataColumn100 externalColumn = output.ExternalMetadataColumnCollection.New();
                 PopulateExternalMetadataColumn(externalColumn, outColumn);
 
                 // Map the external column to the output column.
                 outColumn.ExternalMetadataColumnID = externalColumn.ID;
+
             }
         }
 
@@ -239,7 +251,7 @@ namespace MongoDataSource {
         private dynamic GetCollectionCursor(dynamic collection) {
             IDTSCustomProperty100 queryProp = ComponentMetaData.CustomPropertyCollection[CONDITION_DOC_PROP_NAME];
             IDTSCustomProperty100 conditionalFieldProp = ComponentMetaData.CustomPropertyCollection[CONDITIONAL_FIELD_PROP_NAME];
-            
+
             if(!String.IsNullOrEmpty(queryProp.Value)) {
                 ComponentMetaData.FireInformation(0, "MongoDataSource", "selecting data with specified query: " + queryProp.Value, String.Empty, 0, false);
 
@@ -273,7 +285,7 @@ namespace MongoDataSource {
             ColumnInfo info = GetColumnInfo(fieldName);
 
             if (info == null) {
-                throw new Exception("No information was found for the column '" + fieldName + "', ensure the column name is correct"); 
+                throw new Exception("No information was found for the column '" + fieldName + "', ensure the column name is correct");
             }
 
             return ParseConditionValue(value, info.ColumnDataType);
@@ -322,7 +334,7 @@ namespace MongoDataSource {
             } else if (dt == DataType.DT_R8 || dt == DataType.DT_R4) {
                 parsedValue = new BsonDouble(Double.Parse(value));
             }
-            
+
             return parsedValue;
         }
 
@@ -351,7 +363,7 @@ namespace MongoDataSource {
             }
         }
 
-		private ColumnInfo GetColumnInfo(String name) {
+    private ColumnInfo GetColumnInfo(String name) {
             foreach(ColumnInfo info in columnInformation) {
                 if (info.ColumnName.Equals(name)) {
                     return info;
@@ -369,14 +381,14 @@ namespace MongoDataSource {
     }
 
     internal class CollectionNameEditor : UITypeEditor {
-        private IWindowsFormsEditorService edSvc = null; 
+        private IWindowsFormsEditorService edSvc = null;
 
         public override object EditValue(System.ComponentModel.ITypeDescriptorContext context, IServiceProvider provider, object value) {
             edSvc = (IWindowsFormsEditorService)provider.GetService(typeof(IWindowsFormsEditorService));
-            
+
             if (edSvc != null) {
                 MongoDatabase database = GetDatabase(context);
-                
+
                 if (database != null) {
                     ListBox lb = BuildListBox(database);
 
