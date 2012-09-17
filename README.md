@@ -10,6 +10,8 @@ This data source depends on the C# MongoDB drivers found at:
 
 https://github.com/mongodb/mongo-csharp-driver/downloads
 
+The latest version of Mongosis (1.3.0) requires the 1.5.0 version of the C# MongoDB drivers.
+
 The unit tests depend on the .NET mocking framework 'JustMock Lite' available at:
 
 http://www.telerik.com/freemocking.aspx
@@ -43,6 +45,7 @@ Mongosis has an installer which makes deployment very easy, however if you wish 
 
 * Ensure that 'Run64BitRuntime' option in SSIS project Configuration/Debugging properties is set to 'False'.
 * If you're running the 32-bit version of Windows there is no 'Program Files(x86)' so deploy to folders under 'Program Files' instead.
+* From version 1.5.0 of the C# MongoDB drivers and on, the installer does not load the drivers into the GAC. This step must be done by either using the gacutil or by dropping the drivers in the C:\windows\assembly folder.
 
 ## Contact:
 
