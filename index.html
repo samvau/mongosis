@@ -98,7 +98,13 @@
 			            <h2>Requirements</h2>
 						<ul>
 							<li><p>Microsoft <a href="http://www.microsoft.com/visualstudio/en-us/products/2010-editions">Visual Studio</a> 2010 <i>(SQL Server Data Tools)</i></p></li>
-							<li><p>The <a href="https://github.com/mongodb/mongo-csharp-driver/downloads">MongoDB C# Driver</a></p></li>
+							<li><p>The <a href="https://github.com/mongodb/mongo-csharp-driver/downloads">MongoDB C# Driver</a></p>
+								<ul>
+									<li>The latest version of Mongosis requires version 1.5.0 of the MongoDB C# driver</li>
+									<li>Run gacutil.exe with '/iF' option to load the MongoDB C# driver DLLs in to the Global Assembly Cache</li>
+									<li>gacutil.exe can be found here: C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\bin\NETFX 4.0 Tools\gacutil.exe</li>
+								</ul>
+							</li>
 						</ul>
 			        </div>
 			        <div class="tab-pane" id="gettingstarted">
