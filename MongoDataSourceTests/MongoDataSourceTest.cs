@@ -156,7 +156,8 @@ public class MongoSourceTests {
     public void GetDataTypeValueFromBsonValueTestWithStringToInteger()
     {
         String inputInteger = "1234";
-        CheckForCorrectDataTypeFromBson(new BsonString(inputInteger), DataType.DT_I8, 1234);
+        Int64 expectedInt = 1234;
+        CheckForCorrectDataTypeFromBson(new BsonString(inputInteger), DataType.DT_I8, expectedInt);
     }
 
     private void CheckForCorrectDataTypeFromBson(BsonValue bsonValue, DataType dataType, object expectedValue) {

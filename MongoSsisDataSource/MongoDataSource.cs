@@ -349,12 +349,9 @@ namespace MongoDataSource {
             if (dt == DataType.DT_I8 | dt == DataType.DT_I4) {
                 if (value.IsString) {
                     Int64 parsedInt = -1;
-                    try {
-                         parsedInt = Int64.Parse(value.ToString());
-                    } catch (FormatException e) {
-                        // Setting pbCancel to true means that execution of the component will terminate upon this error.
+                    if (!Int64.TryParse(value.ToString(), out parsedInt)) {
                         bool pbCancel = true;
-                        ComponentMetaData.FireError(0, "MongoDataSource", "Cannot parse string value to integer: " + e.Message.ToString(), "", 0, out pbCancel);
+                        ComponentMetaData.FireError(0, "MongoDataSource", "Cannot parse string value to integer: " + value.ToString(), "", 0, out pbCancel);
                     }
                     return parsedInt;
                 } else {
