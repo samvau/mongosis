@@ -347,7 +347,19 @@ namespace MongoDataSource {
         private object GetDataTypeValueFromBsonValue(BsonValue value, DataType dt) {
 
             if (dt == DataType.DT_I8 | dt == DataType.DT_I4) {
-                return value.ToInt64();
+                if (value.IsString) {
+                    Int32 parsedInt = -1;
+                    try {
+                         parsedInt = Int32.Parse(value.ToString());
+                    } catch (FormatException e) {
+                        // Setting pbCancel to true means that execution of the component will terminate upon this error.
+                        bool pbCancel = true;
+                        ComponentMetaData.FireError(0, "MongoDataSource", "Cannot parse string value to integer: " + e.Message.ToString(), "", 0, out pbCancel);
+                    }
+                    return parsedInt;
+                } else {
+                    return value.ToInt64();
+                }
             } else if (dt == DataType.DT_BOOL) {
                 return value.ToBoolean();
             } else if (dt == DataType.DT_R8 | dt == DataType.DT_R4) {
