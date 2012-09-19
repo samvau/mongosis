@@ -347,7 +347,16 @@ namespace MongoDataSource {
         private object GetDataTypeValueFromBsonValue(BsonValue value, DataType dt) {
 
             if (dt == DataType.DT_I8 | dt == DataType.DT_I4) {
-                return value.ToInt64();
+                if (value.IsString) {
+                    Int64 parsedInt = -1;
+                    if (!Int64.TryParse(value.ToString(), out parsedInt)) {
+                        bool pbCancel = true;
+                        ComponentMetaData.FireError(0, "MongoDataSource", "Cannot parse string value to integer: " + value.ToString(), "", 0, out pbCancel);
+                    }
+                    return parsedInt;
+                } else {
+                    return value.ToInt64();
+                }
             } else if (dt == DataType.DT_BOOL) {
                 return value.ToBoolean();
             } else if (dt == DataType.DT_R8 | dt == DataType.DT_R4) {

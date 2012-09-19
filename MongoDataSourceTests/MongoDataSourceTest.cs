@@ -149,6 +149,17 @@ public class MongoSourceTests {
         CheckForCorrectDataTypeFromBson(new BsonDateTime(today), DataType.DT_DBTIMESTAMP, today);
     }
 
+    ///<summary>
+    ///A test for GetDataTypeValueFromBsonValue when input is string and output is integer
+    ///</summary>
+    [TestMethod(), DeploymentItem("MongoSsisDataSource.dll")]
+    public void GetDataTypeValueFromBsonValueTestWithStringToInteger()
+    {
+        String inputInteger = "1234";
+        Int64 expectedInt = 1234;
+        CheckForCorrectDataTypeFromBson(new BsonString(inputInteger), DataType.DT_I8, expectedInt);
+    }
+
     private void CheckForCorrectDataTypeFromBson(BsonValue bsonValue, DataType dataType, object expectedValue) {
         MongoDataSource_Accessor target = new MongoDataSource_Accessor();
 
@@ -273,8 +284,8 @@ public class MongoSourceTests {
     [TestMethod()]
     [DeploymentItem("MongoSsisDataSource.dll")]
     public void AddCustomPropertiesTest() {
-        MongoDataSource_Accessor target = new MongoDataSource_Accessor(); 
-        
+        MongoDataSource_Accessor target = new MongoDataSource_Accessor();
+
         IDTSCustomPropertyCollection100 customPropertyCollection = Mock.Create<IDTSCustomPropertyCollection100>();
 
         IDTSCustomProperty100 collectionNameProp = Mock.Create<IDTSCustomProperty100>();
@@ -388,7 +399,7 @@ public class MongoSourceTests {
         object parsedValue = target.ParseConditionValue("now", DataType.DT_DATE);
 
         Assert.IsTrue(parsedValue is BsonDateTime);
-        
+
         Assert.AreEqual(DateTime.Now.ToLongDateString(), ((BsonDateTime)parsedValue).AsDateTime.ToLongDateString());
     }
 
@@ -411,7 +422,7 @@ public class MongoSourceTests {
     [TestMethod()]
     public void ParseConditionValueForYesterdayTest() {
         MongoDataSource_Accessor target = new MongoDataSource_Accessor();
-        
+
         object parsedValue = target.ParseConditionValue("yesterday", DataType.DT_DATE);
 
         Assert.AreEqual(DateTime.Now.AddDays(-1).ToLongDateString(), ((BsonDateTime)parsedValue).AsDateTime.ToLongDateString());

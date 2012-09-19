@@ -32,7 +32,7 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("1.3.0.0")]
-[assembly: AssemblyFileVersion("1.3.0.0")]
+[assembly: AssemblyVersion("1.4.0.0")]
+[assembly: AssemblyFileVersion("1.4.0.0")]
 
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("MongoSourceTests,PublicKey=00240000048000009400000006020000002400005253413100040000010001006fa653326a44fd9ad2dd1de51d680fb2697b66787b0674f08d2410e2c3fc22039f49a7e913471477410789d76c465b5d0070d3f83ec15f19860224ebd0ced7a9f78543aa7b3444ad50b6be951770d9edced10c50df1527501697db291697cecee93f1b1f4b8d00323220275ec0a8a922586189e6d4cacfc11f36d03ef8b99ec7")]
