@@ -348,9 +348,9 @@ namespace MongoDataSource {
 
             if (dt == DataType.DT_I8 | dt == DataType.DT_I4) {
                 if (value.IsString) {
-                    Int32 parsedInt = -1;
+                    Int64 parsedInt = -1;
                     try {
-                         parsedInt = Int32.Parse(value.ToString());
+                         parsedInt = Int64.Parse(value.ToString());
                     } catch (FormatException e) {
                         // Setting pbCancel to true means that execution of the component will terminate upon this error.
                         bool pbCancel = true;
