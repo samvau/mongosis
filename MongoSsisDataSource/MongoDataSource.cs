@@ -466,7 +466,15 @@ namespace MongoDataSource {
                 if (propInfo.Name.Equals("PipelineTask")) {
                     Microsoft.SqlServer.Dts.Runtime.EventsProvider eventsProvider = (Microsoft.SqlServer.Dts.Runtime.EventsProvider)propInfo.GetValue(context.Instance, null);
 
-                    package = (Microsoft.SqlServer.Dts.Runtime.Package)eventsProvider.Parent;
+                    if( eventsProvider.Parent.GetType() == typeof(Microsoft.SqlServer.Dts.Runtime.Package) ) {
+                        package = (Microsoft.SqlServer.Dts.Runtime.Package)eventsProvider.Parent;
+                    } else if(eventsProvider.Parent.GetType() == typeof(Microsoft.SqlServer.Dts.Runtime.Sequence)
+                        || eventsProvider.Parent.GetType() == typeof(Microsoft.SqlServer.Dts.Runtime.ForLoop)
+                        || eventsProvider.Parent.GetType() == typeof(Microsoft.SqlServer.Dts.Runtime.ForEachLoop)) {
+                        package = (Microsoft.SqlServer.Dts.Runtime.Package)eventsProvider.Parent.Parent;
+                    } else {
+                        throw new Exception("No database connection found!");
+                    }
                 }
             }
 
