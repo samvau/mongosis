@@ -466,7 +466,20 @@ namespace MongoDataSource {
                 if (propInfo.Name.Equals("PipelineTask")) {
                     Microsoft.SqlServer.Dts.Runtime.EventsProvider eventsProvider = (Microsoft.SqlServer.Dts.Runtime.EventsProvider)propInfo.GetValue(context.Instance, null);
 
-                    package = (Microsoft.SqlServer.Dts.Runtime.Package)eventsProvider.Parent;
+                    Microsoft.SqlServer.Dts.Runtime.DtsContainer tmpObj = eventsProvider;
+
+                    while (package == null && tmpObj.Parent != null) {
+
+                        if (tmpObj.Parent.GetType() == typeof(Microsoft.SqlServer.Dts.Runtime.Package)) {
+                            package = (Microsoft.SqlServer.Dts.Runtime.Package)tmpObj.Parent;
+                        } else {
+                            tmpObj = tmpObj.Parent;
+                        }
+                    }
+                    
+                    if(package == null) {
+                        throw new Exception("No package found for task!");
+                    }
                 }
             }
 
