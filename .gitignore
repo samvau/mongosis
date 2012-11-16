@@ -13,3 +13,4 @@ MongoDataSourceTests/obj/
 Installer/bin/
 Installer/obj/
 Installer/MongoSsisDataSource.dll
+MongoDataSourceTests/mongodatasource.snk
