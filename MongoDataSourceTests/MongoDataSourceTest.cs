@@ -150,6 +150,16 @@ public class MongoSourceTests {
     }
 
     ///<summary>
+    ///A test for GetDataTypeValueFromBsonValue
+    ///</summary>
+    [TestMethod(), DeploymentItem("MongoSsisDataSource.dll")]
+    public void GetDataTypeValueFromBsonValueTestWithObjectId()
+    {
+        ObjectId objId = new ObjectId();
+        CheckForCorrectDataTypeFromBson(new BsonObjectId(objId), DataType.DT_STR, objId.ToString());
+    }
+
+    ///<summary>
     ///A test for GetDataTypeValueFromBsonValue when input is string and output is integer
     ///</summary>
     [TestMethod(), DeploymentItem("MongoSsisDataSource.dll")]
