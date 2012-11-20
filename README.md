@@ -12,7 +12,7 @@ https://github.com/mongodb/mongo-csharp-driver/downloads
 
 ### Notes:
 
-* The latest version of Mongosis (1.6.0) requires the 1.5.0 version of the C# MongoDB drivers.
+* The latest version of Mongosis (1.6.1) requires the 1.5.0 version of the C# MongoDB drivers.
 * From version 1.5.0 of the C# MongoDB drivers and on, the installer does not load the drivers into the Global Assembly Cache (GAC).
     * Run gacutil.exe with '/iF' option to load the C# MongoDB driver DLLs in to the GAC.
     * gacutil.exe can be found here: C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\bin\NETFX 4.0 Tools\gacutil.exe
