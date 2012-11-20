@@ -364,7 +364,7 @@ namespace MongoDataSource {
             } else if (dt == DataType.DT_DATE | dt == DataType.DT_DBTIMESTAMPOFFSET | dt == DataType.DT_DBTIMESTAMP) {
                 return DateTime.Parse(value.ToString());
             } else {
-                if (!value.IsString) {
+                if (!value.IsObjectId && !value.IsString) {
                     ComponentMetaData.FireWarning(0, "MongoDataSource", "Converting " + value.BsonType + " to string, though datatype was " + dt, String.Empty, 0);
                 }
 
