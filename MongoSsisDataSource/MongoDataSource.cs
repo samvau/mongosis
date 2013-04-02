@@ -35,7 +35,7 @@ namespace MongoDataSource
         internal static string MONGODB_CONNECTION_MANAGER_NAME = "MongoDB";
 
         private IDTSConnectionManager100 m_ConnMgr;
-        private List<ColumnInfo> columnInformation;
+        private Dictionary<ColumnInfo, ColumnInfo> columnInformation;
         private int errorOutputID = -1;
         private int errorOutputIndex = -1;
         private MongoDatabase database;
@@ -236,15 +236,19 @@ namespace MongoDataSource
 
         public override void PreExecute()
         {
-            this.columnInformation = new List<ColumnInfo>();
+            this.columnInformation = new Dictionary<ColumnInfo, ColumnInfo>();
             this.GetErrorOutputInfo(ref errorOutputID, ref errorOutputIndex);
 
             IDTSOutput100 defaultOutput = null;
+            IDTSOutput100 errorOutput = null;
             foreach (IDTSOutput100 output in ComponentMetaData.OutputCollection)
                 if (output.ID != errorOutputID)
                 {
                     defaultOutput = output;
-                    break;
+                }
+                else
+                {
+                    errorOutput = output;
                 }
 
             foreach (IDTSOutputColumn100 col in defaultOutput.OutputColumnCollection)
@@ -253,7 +257,21 @@ namespace MongoDataSource
                 ci.BufferColumnIndex = BufferManager.FindColumnByLineageID(defaultOutput.Buffer, col.LineageID);
                 ci.ColumnName = col.Name;
                 ci.ColumnDataType = col.DataType;
-                this.columnInformation.Add(ci);
+
+                IDTSOutputColumn100 errCol = null;
+                foreach (IDTSOutputColumn100 c in errorOutput.OutputColumnCollection)
+                    if (c.Name == col.Name)
+                    {
+                        errCol = c;
+                        break;
+                    }
+
+                ColumnInfo errCi = new ColumnInfo();
+                errCi.BufferColumnIndex = BufferManager.FindColumnByLineageID(errorOutput.Buffer, errCol.LineageID);
+                errCi.ColumnName = col.Name;
+                errCi.ColumnDataType = col.DataType;
+
+                this.columnInformation.Add(ci, errCi);
             }
         }
 
@@ -304,7 +322,7 @@ namespace MongoDataSource
                 try
                 {
                     defaultBuffer.AddRow();
-                    foreach (ColumnInfo ci in columnInformation)
+                    foreach (ColumnInfo ci in columnInformation.Keys)
                     {
                         currentColumnInfo = ci;
                         if (document.Contains(ci.ColumnName) && document[ci.ColumnName] != null)
@@ -336,11 +354,9 @@ namespace MongoDataSource
 
                             // Get the values from the default buffer
                             // and copy them to the error buffer.
-                            foreach (ColumnInfo columnInfo in columnInformation)
+                            foreach (KeyValuePair<ColumnInfo, ColumnInfo> columnInfo in columnInformation)
                             {
-                                if (columnInfo == currentColumnInfo)
-                                    break;
-                                errorBuffer.SetString(columnInfo.BufferColumnIndex, defaultBuffer.GetString(columnInfo.BufferColumnIndex));
+                                errorBuffer[columnInfo.Value.BufferColumnIndex] = defaultBuffer[columnInfo.Key.BufferColumnIndex];
                             }
 
                             // Set the error information.
@@ -535,7 +551,7 @@ namespace MongoDataSource
 
         private ColumnInfo GetColumnInfo(String name)
         {
-            foreach (ColumnInfo info in columnInformation)
+            foreach (ColumnInfo info in columnInformation.Keys)
             {
                 if (info.ColumnName.Equals(name))
                 {
