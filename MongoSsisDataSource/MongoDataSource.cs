@@ -4,27 +4,27 @@
  */
 
 using System;
-using System.Collections;
+using System.Collections.Generic;
+using System.Drawing.Design;
+using System.Reflection;
+using System.Windows.Forms;
+using System.Windows.Forms.Design;
 using Microsoft.SqlServer.Dts.Pipeline;
 using Microsoft.SqlServer.Dts.Pipeline.Wrapper;
 using Microsoft.SqlServer.Dts.Runtime.Wrapper;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using MongoDB.Driver.Builders;
-using MongoDB.Bson;
-using System.Drawing.Design;
-using System.Windows.Forms;
-using System.Windows.Forms.Design;
-using System.Reflection;
-using System.Collections.Generic;
-using System.Linq;
 
-namespace MongoDataSource {
+namespace MongoDataSource
+{
 
     [DtsPipelineComponent(DisplayName = "MongoDB Source",
         Description = "Mongosis - Loads data from a MongoDB data source",
         ComponentType = ComponentType.SourceAdapter,
         IconResource = "MongoDataSource.Resources.mongosis.ico")]
-    public class MongoDataSource : PipelineComponent {
+    public class MongoDataSource : PipelineComponent
+    {
 
         private static string COLLECTION_NAME_PROP_NAME = "CollectionName";
         private static string CONDITIONAL_FIELD_PROP_NAME = "ConditionalFieldName";
@@ -62,7 +62,8 @@ namespace MongoDataSource {
             conn.Name = MONGODB_CONNECTION_MANAGER_NAME;
         }
 
-        private void AddCustomProperties(IDTSCustomPropertyCollection100 customPropertyCollection) {
+        private void AddCustomProperties(IDTSCustomPropertyCollection100 customPropertyCollection)
+        {
             IDTSCustomProperty100 customProperty = createCustomProperty(customPropertyCollection, COLLECTION_NAME_PROP_NAME, "Name of collection to import data from");
             customProperty.UITypeEditor = typeof(CollectionNameEditor).AssemblyQualifiedName;
 
@@ -73,7 +74,8 @@ namespace MongoDataSource {
             createCustomProperty(customPropertyCollection, CONDITION_DOC_PROP_NAME, "Mongo query document for conditional query");
         }
 
-        private IDTSCustomProperty100 createCustomProperty(IDTSCustomPropertyCollection100 customPropertyCollection, string name, string description) {
+        private IDTSCustomProperty100 createCustomProperty(IDTSCustomPropertyCollection100 customPropertyCollection, string name, string description)
+        {
             IDTSCustomProperty100 customProperty = customPropertyCollection.New();
             customProperty.Description = description;
             customProperty.Name = name;
@@ -81,20 +83,25 @@ namespace MongoDataSource {
             return customProperty;
         }
 
-        private IDTSCustomPropertyCollection100 GetCustomPropertyCollection() {
+        private IDTSCustomPropertyCollection100 GetCustomPropertyCollection()
+        {
             return ComponentMetaData.CustomPropertyCollection;
         }
 
-        public override Microsoft.SqlServer.Dts.Pipeline.Wrapper.IDTSCustomProperty100 SetComponentProperty(string propertyName, object propertyValue) {
-            if (propertyName.Equals("CollectionName")) {
+        public override Microsoft.SqlServer.Dts.Pipeline.Wrapper.IDTSCustomProperty100 SetComponentProperty(string propertyName, object propertyValue)
+        {
+            if (propertyName.Equals("CollectionName"))
+            {
                 string collectionName = Convert.ToString(propertyValue);
                 CreateColumnsFromMongoDb(collectionName);
             }
             return base.SetComponentProperty(propertyName, propertyValue);
         }
 
-        public override void AcquireConnections(object transaction) {
-            if (ComponentMetaData.RuntimeConnectionCollection.Count > 0) {
+        public override void AcquireConnections(object transaction)
+        {
+            if (ComponentMetaData.RuntimeConnectionCollection.Count > 0)
+            {
                 IDTSRuntimeConnection100 conn = ComponentMetaData.RuntimeConnectionCollection[0];
                 m_ConnMgr = conn.ConnectionManager;
 
@@ -102,19 +109,23 @@ namespace MongoDataSource {
             }
         }
 
-        public override void ReleaseConnections() {
-            if (m_ConnMgr != null) {
+        public override void ReleaseConnections()
+        {
+            if (m_ConnMgr != null)
+            {
                 m_ConnMgr.ReleaseConnection(database);
             }
         }
 
-        public override void SetOutputColumnDataTypeProperties(int iOutputID, int iOutputColumnID, Microsoft.SqlServer.Dts.Runtime.Wrapper.DataType eDataType, int iLength, int iPrecision, int iScale, int iCodePage) {
+        public override void SetOutputColumnDataTypeProperties(int iOutputID, int iOutputColumnID, Microsoft.SqlServer.Dts.Runtime.Wrapper.DataType eDataType, int iLength, int iPrecision, int iScale, int iCodePage)
+        {
             IDTSOutputColumn100 outColumn = ComponentMetaData.OutputCollection[0].OutputColumnCollection.GetObjectByID(iOutputColumnID);
 
             outColumn.SetDataTypeProperties(eDataType, iLength, iPrecision, iScale, iCodePage);
         }
 
-        private void CreateColumnsFromMongoDb(string collectionName) {
+        private void CreateColumnsFromMongoDb(string collectionName)
+        {
             // Get the output.
             foreach (IDTSOutput100 output in ComponentMetaData.OutputCollection)
             {
@@ -148,7 +159,7 @@ namespace MongoDataSource {
                         bsonElementWithValue = documentWithNonNullElementValue.GetElement(bsonElement.Name);
 
                     IDTSOutputColumn100 outColumn = BuildOutputColumn(output.OutputColumnCollection, bsonElementWithValue ?? bsonElement);
-                    if(output.IsErrorOut)
+                    if (output.IsErrorOut)
                         outColumn.ErrorRowDisposition = DTSRowDisposition.RD_FailComponent;
 
                     IDTSExternalMetadataColumn100 externalColumn = output.ExternalMetadataColumnCollection.New();
@@ -161,7 +172,8 @@ namespace MongoDataSource {
             }
         }
 
-        private IDTSOutputColumn100 BuildOutputColumn(IDTSOutputColumnCollection100 outputColumnCollection, BsonElement bsonElement) {
+        private IDTSOutputColumn100 BuildOutputColumn(IDTSOutputColumnCollection100 outputColumnCollection, BsonElement bsonElement)
+        {
             IDTSOutputColumn100 outColumn = outputColumnCollection.New();
 
             // Set the properties of the output column.
@@ -171,7 +183,8 @@ namespace MongoDataSource {
             int length = 0;
             int codepage = 0;
 
-            if (dt == DataType.DT_STR) {
+            if (dt == DataType.DT_STR)
+            {
                 length = 256;
                 codepage = 1252;
             }
@@ -181,7 +194,8 @@ namespace MongoDataSource {
             return outColumn;
         }
 
-        private void PopulateExternalMetadataColumn(IDTSExternalMetadataColumn100 externalColumnToPopulate, IDTSOutputColumn100 outputColumn) {
+        private void PopulateExternalMetadataColumn(IDTSExternalMetadataColumn100 externalColumnToPopulate, IDTSOutputColumn100 outputColumn)
+        {
             externalColumnToPopulate.Name = outputColumn.Name;
             externalColumnToPopulate.Precision = outputColumn.Precision;
             externalColumnToPopulate.Length = outputColumn.Length;
@@ -189,23 +203,32 @@ namespace MongoDataSource {
             externalColumnToPopulate.Scale = outputColumn.Scale;
         }
 
-        private DataType GetColumnDataType(BsonValue mongoValue) {
+        private DataType GetColumnDataType(BsonValue mongoValue)
+        {
             DataType dt = DataType.DT_STR;
 
-            if (mongoValue.IsBsonDateTime) {
+            if (mongoValue.IsBsonDateTime)
+            {
                 dt = DataType.DT_DATE;
-            } else if (mongoValue.IsDouble) {
+            }
+            else if (mongoValue.IsDouble)
+            {
                 dt = DataType.DT_R8;
-            } else if (mongoValue.IsBoolean) {
+            }
+            else if (mongoValue.IsBoolean)
+            {
                 dt = DataType.DT_BOOL;
-            } else if (mongoValue.IsInt32 | mongoValue.IsInt64) {
+            }
+            else if (mongoValue.IsInt32 | mongoValue.IsInt64)
+            {
                 dt = DataType.DT_I8;
             }
 
             return dt;
         }
 
-        public override void PreExecute() {
+        public override void PreExecute()
+        {
             this.columnInformation = new List<ColumnInfo>();
             IDTSOutput100 defaultOutput = null;
 
@@ -249,11 +272,13 @@ namespace MongoDataSource {
                     errorOutput = output;
             }
 
-            if (database == null) {
+            if (database == null)
+            {
                 AcquireConnections(null);
             }
 
-            if (string.IsNullOrEmpty(collectionNameProp.Value)) {
+            if (string.IsNullOrEmpty(collectionNameProp.Value))
+            {
                 throw new Exception("The collection name is null or empty!");
             }
 
@@ -326,15 +351,19 @@ namespace MongoDataSource {
                 errorBuffer.SetEndOfRowset();
         }
 
-        private dynamic GetCollectionCursor(dynamic collection) {
+        private dynamic GetCollectionCursor(dynamic collection)
+        {
             IDTSCustomProperty100 queryProp = ComponentMetaData.CustomPropertyCollection[CONDITION_DOC_PROP_NAME];
             IDTSCustomProperty100 conditionalFieldProp = ComponentMetaData.CustomPropertyCollection[CONDITIONAL_FIELD_PROP_NAME];
 
-            if(!String.IsNullOrEmpty(queryProp.Value)) {
+            if (!String.IsNullOrEmpty(queryProp.Value))
+            {
                 ComponentMetaData.FireInformation(0, "MongoDataSource", "selecting data with specified query: " + queryProp.Value, String.Empty, 0, false);
 
                 return collection.Find(new QueryDocument(BsonDocument.Parse(queryProp.Value)));
-            } else if (!String.IsNullOrEmpty(conditionalFieldProp.Value)) {
+            }
+            else if (!String.IsNullOrEmpty(conditionalFieldProp.Value))
+            {
                 IDTSCustomProperty100 fromValueProp = ComponentMetaData.CustomPropertyCollection[CONDITION_FROM_PROP_NAME];
                 IDTSCustomProperty100 toValueProp = ComponentMetaData.CustomPropertyCollection[CONDITION_TO_PROP_NAME];
 
@@ -343,106 +372,148 @@ namespace MongoDataSource {
                 ComponentMetaData.FireInformation(0, "MongoDataSource", "selecting data with query: " + query, String.Empty, 0, false);
 
                 return collection.Find(query);
-            } else {
+            }
+            else
+            {
                 ComponentMetaData.FireInformation(0, "MongoDataSource", "selecting all data", String.Empty, 0, false);
 
                 return collection.FindAll();
             }
         }
 
-        private IMongoQuery BuildQuery(IDTSCustomProperty100 condFieldProp,IDTSCustomProperty100 fromProp,IDTSCustomProperty100 toProp) {
+        private IMongoQuery BuildQuery(IDTSCustomProperty100 condFieldProp, IDTSCustomProperty100 fromProp, IDTSCustomProperty100 toProp)
+        {
             BsonValue fromValue = GetBsonValueForQueryCondition(condFieldProp.Value, fromProp.Value);
             BsonValue toValue = GetBsonValueForQueryCondition(condFieldProp.Value, toProp.Value);
 
             return BuildQuery(condFieldProp.Value, fromValue, toValue);
         }
 
-        private BsonValue GetBsonValueForQueryCondition(string fieldName, string value) {
-            if(String.IsNullOrEmpty(value)) return null;
+        private BsonValue GetBsonValueForQueryCondition(string fieldName, string value)
+        {
+            if (String.IsNullOrEmpty(value)) return null;
 
             ColumnInfo info = GetColumnInfo(fieldName);
 
-            if (info == null) {
+            if (info == null)
+            {
                 throw new Exception("No information was found for the column '" + fieldName + "', ensure the column name is correct");
             }
 
             return ParseConditionValue(value, info.ColumnDataType);
         }
 
-        private IMongoQuery BuildQuery(string conditionFieldName, BsonValue fromValue, BsonValue toValue) {
+        private IMongoQuery BuildQuery(string conditionFieldName, BsonValue fromValue, BsonValue toValue)
+        {
             IMongoQuery finalQuery = null;
             IMongoQuery fromQuery = null;
             IMongoQuery toQuery = null;
 
-            if (fromValue != null) {
+            if (fromValue != null)
+            {
                 fromQuery = Query.GTE(conditionFieldName, fromValue);
             }
-            if (toValue != null) {
+            if (toValue != null)
+            {
                 toQuery = Query.LTE(conditionFieldName, toValue);
             }
 
-            if (fromQuery != null && toQuery != null) {
+            if (fromQuery != null && toQuery != null)
+            {
                 finalQuery = Query.And(fromQuery, toQuery);
-            } else if (toQuery != null) {
+            }
+            else if (toQuery != null)
+            {
                 finalQuery = toQuery;
-            } else {
+            }
+            else
+            {
                 finalQuery = fromQuery;
             }
 
             return finalQuery;
         }
 
-        private BsonValue ParseConditionValue(String value, DataType dt) {
+        private BsonValue ParseConditionValue(String value, DataType dt)
+        {
             BsonValue parsedValue = value;
 
-            if (dt == DataType.DT_DATE | dt == DataType.DT_DBTIMESTAMPOFFSET | dt == DataType.DT_DBTIMESTAMP) {
+            if (dt == DataType.DT_DATE | dt == DataType.DT_DBTIMESTAMPOFFSET | dt == DataType.DT_DBTIMESTAMP)
+            {
                 if ("now".Equals(value, StringComparison.CurrentCultureIgnoreCase) ||
-                    "today".Equals(value,StringComparison.CurrentCultureIgnoreCase)) {
+                    "today".Equals(value, StringComparison.CurrentCultureIgnoreCase))
+                {
                     parsedValue = new BsonDateTime(DateTime.Now);
-                } else if("yesterday".Equals(value,StringComparison.CurrentCultureIgnoreCase)) {
+                }
+                else if ("yesterday".Equals(value, StringComparison.CurrentCultureIgnoreCase))
+                {
                     parsedValue = new BsonDateTime(DateTime.Now.AddDays(-1));
-                } else if(value.StartsWith("-")) {
+                }
+                else if (value.StartsWith("-"))
+                {
                     int noOfDays = Int16.Parse(value);
                     parsedValue = new BsonDateTime(DateTime.Now.AddDays(noOfDays));
-                } else {
+                }
+                else
+                {
                     parsedValue = new BsonDateTime(DateTime.Parse(value));
                 }
-            } else if (dt == DataType.DT_I8 || dt == DataType.DT_I4) {
+            }
+            else if (dt == DataType.DT_I8 || dt == DataType.DT_I4)
+            {
                 parsedValue = new BsonInt64(Int64.Parse(value));
-            } else if (dt == DataType.DT_R8 || dt == DataType.DT_R4) {
+            }
+            else if (dt == DataType.DT_R8 || dt == DataType.DT_R4)
+            {
                 parsedValue = new BsonDouble(Double.Parse(value));
             }
 
             return parsedValue;
         }
 
-        private object GetValue(BsonDocument document, ColumnInfo ci) {
+        private object GetValue(BsonDocument document, ColumnInfo ci)
+        {
             BsonValue value = document.GetValue(ci.ColumnName);
 
             return GetDataTypeValueFromBsonValue(value, ci.ColumnDataType);
         }
 
-        private object GetDataTypeValueFromBsonValue(BsonValue value, DataType dt) {
+        private object GetDataTypeValueFromBsonValue(BsonValue value, DataType dt)
+        {
 
-            if (dt == DataType.DT_I8 | dt == DataType.DT_I4) {
-                if (value.IsString) {
+            if (dt == DataType.DT_I8 | dt == DataType.DT_I4)
+            {
+                if (value.IsString)
+                {
                     Int64 parsedInt = -1;
-                    if (!Int64.TryParse(value.ToString(), out parsedInt)) {
+                    if (!Int64.TryParse(value.ToString(), out parsedInt))
+                    {
                         bool pbCancel = true;
                         ComponentMetaData.FireError(0, "MongoDataSource", "Cannot parse string value to integer: " + value.ToString(), "", 0, out pbCancel);
                     }
                     return parsedInt;
-                } else {
+                }
+                else
+                {
                     return value.ToInt64();
                 }
-            } else if (dt == DataType.DT_BOOL) {
+            }
+            else if (dt == DataType.DT_BOOL)
+            {
                 return value.ToBoolean();
-            } else if (dt == DataType.DT_R8 | dt == DataType.DT_R4) {
+            }
+            else if (dt == DataType.DT_R8 | dt == DataType.DT_R4)
+            {
                 return value.ToDouble();
-            } else if (dt == DataType.DT_DATE | dt == DataType.DT_DBTIMESTAMPOFFSET | dt == DataType.DT_DBTIMESTAMP) {
+            }
+            else if (dt == DataType.DT_DATE | dt == DataType.DT_DBTIMESTAMPOFFSET | dt == DataType.DT_DBTIMESTAMP)
+            {
                 return DateTime.Parse(value.ToString());
-            } else {
-                if (!value.IsObjectId && !value.IsString && !value.IsBsonSymbol) {
+            }
+            else
+            {
+                if (!value.IsObjectId && !value.IsString && !value.IsBsonSymbol)
+                {
                     ComponentMetaData.FireWarning(0, "MongoDataSource", "Converting " + value.BsonType + " to string, though datatype was " + dt, String.Empty, 0);
                 }
 
@@ -450,9 +521,12 @@ namespace MongoDataSource {
             }
         }
 
-    private ColumnInfo GetColumnInfo(String name) {
-            foreach(ColumnInfo info in columnInformation) {
-                if (info.ColumnName.Equals(name)) {
+        private ColumnInfo GetColumnInfo(String name)
+        {
+            foreach (ColumnInfo info in columnInformation)
+            {
+                if (info.ColumnName.Equals(name))
+                {
                     return info;
                 }
             }
@@ -461,41 +535,52 @@ namespace MongoDataSource {
 
     }
 
-    internal class ColumnInfo {
+    internal class ColumnInfo
+    {
         internal int BufferColumnIndex;
         internal string ColumnName;
         internal DataType ColumnDataType;
     }
 
-    internal class CollectionNameEditor : UITypeEditor {
+    internal class CollectionNameEditor : UITypeEditor
+    {
         private IWindowsFormsEditorService edSvc = null;
 
-        public override object EditValue(System.ComponentModel.ITypeDescriptorContext context, IServiceProvider provider, object value) {
+        public override object EditValue(System.ComponentModel.ITypeDescriptorContext context, IServiceProvider provider, object value)
+        {
             edSvc = (IWindowsFormsEditorService)provider.GetService(typeof(IWindowsFormsEditorService));
 
-            if (edSvc != null) {
+            if (edSvc != null)
+            {
                 MongoDatabase database = GetDatabase(context);
 
-                if (database != null) {
+                if (database != null)
+                {
                     ListBox lb = BuildListBox(database);
 
                     edSvc.DropDownControl(lb);
 
-                    if (lb.SelectedItem != null) {
+                    if (lb.SelectedItem != null)
+                    {
                         return lb.SelectedItem;
                     }
-                } else {
+                }
+                else
+                {
                     throw new Exception("No database connection found!");
                 }
             }
             return value;
         }
 
-        private ListBox BuildListBox(MongoDatabase database) {
+        private ListBox BuildListBox(MongoDatabase database)
+        {
             ListBox lb = new ListBox();
 
-            foreach (String name in database.GetCollectionNames()) {
-                if (!name.StartsWith("system")) {
+            foreach (String name in database.GetCollectionNames())
+            {
+                if (!name.StartsWith("system"))
+                {
                     lb.Items.Add(name);
                 }
             }
@@ -506,27 +591,34 @@ namespace MongoDataSource {
             return lb;
         }
 
-        private MongoDatabase GetDatabase(System.ComponentModel.ITypeDescriptorContext context) {
+        private MongoDatabase GetDatabase(System.ComponentModel.ITypeDescriptorContext context)
+        {
             MongoDatabase db = null;
 
             Microsoft.SqlServer.Dts.Runtime.ConnectionManager cm = GetMongoDBConnectionManager(context);
-            if (cm != null) {
+            if (cm != null)
+            {
                 db = (MongoDatabase)cm.AcquireConnection(null);
             }
 
             return db;
         }
 
-        private Microsoft.SqlServer.Dts.Runtime.ConnectionManager GetMongoDBConnectionManager(System.ComponentModel.ITypeDescriptorContext context) {
+        private Microsoft.SqlServer.Dts.Runtime.ConnectionManager GetMongoDBConnectionManager(System.ComponentModel.ITypeDescriptorContext context)
+        {
             Microsoft.SqlServer.Dts.Runtime.Package package = GetPackageFromContext(context);
 
             return GetMongoDBConnectionManager(package);
         }
 
-        private Microsoft.SqlServer.Dts.Runtime.ConnectionManager GetMongoDBConnectionManager(Microsoft.SqlServer.Dts.Runtime.Package package) {
-            if (package != null) {
-                foreach (Microsoft.SqlServer.Dts.Runtime.ConnectionManager cm in package.Connections) {
-                    if (cm.CreationName.Equals(MongoDataSource.MONGODB_CONNECTION_MANAGER_NAME)) {
+        private Microsoft.SqlServer.Dts.Runtime.ConnectionManager GetMongoDBConnectionManager(Microsoft.SqlServer.Dts.Runtime.Package package)
+        {
+            if (package != null)
+            {
+                foreach (Microsoft.SqlServer.Dts.Runtime.ConnectionManager cm in package.Connections)
+                {
+                    if (cm.CreationName.Equals(MongoDataSource.MONGODB_CONNECTION_MANAGER_NAME))
+                    {
                         return cm;
                     }
                 }
@@ -535,27 +627,35 @@ namespace MongoDataSource {
             return null;
         }
 
-        private Microsoft.SqlServer.Dts.Runtime.Package GetPackageFromContext(System.ComponentModel.ITypeDescriptorContext context) {
+        private Microsoft.SqlServer.Dts.Runtime.Package GetPackageFromContext(System.ComponentModel.ITypeDescriptorContext context)
+        {
             Microsoft.SqlServer.Dts.Runtime.Package package = null;
 
             PropertyInfo[] props = context.Instance.GetType().GetProperties();
 
-            foreach (PropertyInfo propInfo in props) {
-                if (propInfo.Name.Equals("PipelineTask")) {
+            foreach (PropertyInfo propInfo in props)
+            {
+                if (propInfo.Name.Equals("PipelineTask"))
+                {
                     Microsoft.SqlServer.Dts.Runtime.EventsProvider eventsProvider = (Microsoft.SqlServer.Dts.Runtime.EventsProvider)propInfo.GetValue(context.Instance, null);
 
                     Microsoft.SqlServer.Dts.Runtime.DtsContainer tmpObj = eventsProvider;
 
-                    while (package == null && tmpObj.Parent != null) {
+                    while (package == null && tmpObj.Parent != null)
+                    {
 
-                        if (tmpObj.Parent.GetType() == typeof(Microsoft.SqlServer.Dts.Runtime.Package)) {
+                        if (tmpObj.Parent.GetType() == typeof(Microsoft.SqlServer.Dts.Runtime.Package))
+                        {
                             package = (Microsoft.SqlServer.Dts.Runtime.Package)tmpObj.Parent;
-                        } else {
+                        }
+                        else
+                        {
                             tmpObj = tmpObj.Parent;
                         }
                     }
-                    
-                    if(package == null) {
+
+                    if (package == null)
+                    {
                         throw new Exception("No package found for task!");
                     }
                 }
@@ -564,11 +664,13 @@ namespace MongoDataSource {
             return package;
         }
 
-        public override UITypeEditorEditStyle GetEditStyle(System.ComponentModel.ITypeDescriptorContext context) {
+        public override UITypeEditorEditStyle GetEditStyle(System.ComponentModel.ITypeDescriptorContext context)
+        {
             return UITypeEditorEditStyle.DropDown;
         }
 
-        private void OnListBoxSelectedValueChanged(object sender, EventArgs e) {
+        private void OnListBoxSelectedValueChanged(object sender, EventArgs e)
+        {
             // close the drop down as soon as something is clicked
             edSvc.CloseDropDown();
         }
