@@ -15,6 +15,8 @@ using System.Drawing.Design;
 using System.Windows.Forms;
 using System.Windows.Forms.Design;
 using System.Reflection;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace MongoDataSource {
 
@@ -31,19 +33,30 @@ namespace MongoDataSource {
         private static string CONDITION_DOC_PROP_NAME = "ConditionQuery";
 
         private IDTSConnectionManager100 m_ConnMgr;
-        private ArrayList columnInformation;
+        private List<ColumnInfo> columnInformation;
+        private int errorOutputID = -1;
+        private int errorOutputIndex = -1;
         internal MongoDatabase database;
         public static string MONGODB_CONNECTION_MANAGER_NAME = "MongoDB";
 
-        public override void ProvideComponentProperties() {
+        public override void ProvideComponentProperties()
+        {
             // Allow for resetting the component.
             RemoveAllInputsOutputsAndCustomProperties();
             ComponentMetaData.RuntimeConnectionCollection.RemoveAll();
 
             AddCustomProperties(ComponentMetaData.CustomPropertyCollection);
 
+            // Specify that the component has an error output.
+            ComponentMetaData.UsesDispositions = true;
+
             IDTSOutput100 output = ComponentMetaData.OutputCollection.New();
             output.Name = "Output";
+
+            IDTSOutput100 errorOutput = ComponentMetaData.OutputCollection.New();
+            errorOutput.Name = "ErrorOutput";
+            errorOutput.IsErrorOut = true;
+            errorOutput.ErrorRowDisposition = DTSRowDisposition.RD_FailComponent;
 
             IDTSRuntimeConnection100 conn = ComponentMetaData.RuntimeConnectionCollection.New();
             conn.Name = MONGODB_CONNECTION_MANAGER_NAME;
@@ -103,46 +116,48 @@ namespace MongoDataSource {
 
         private void CreateColumnsFromMongoDb(string collectionName) {
             // Get the output.
-            IDTSOutput100 output = ComponentMetaData.OutputCollection[0];
+            foreach (IDTSOutput100 output in ComponentMetaData.OutputCollection)
+            {
+                if (database == null)
+                {
+                    AcquireConnections(null);
+                }
 
-            // Start clean, and remove the columns from both collections.
-            output.OutputColumnCollection.RemoveAll();
-            output.ExternalMetadataColumnCollection.RemoveAll();
+                MongoCollection<BsonDocument> collection = database.GetCollection(collectionName);
 
-            if (database == null) {
-                AcquireConnections(null);
-            }
+                if (collection.Count() == 0)
+                {
+                    throw new Exception(collectionName + " collection has no records");
+                }
 
-            MongoCollection<BsonDocument> collection = database.GetCollection(collectionName);
+                BsonDocument document = collection.FindOne();
 
-            if (collection.Count() == 0) {
-                throw new Exception(collectionName + " collection has no records");
-            }
+                // Walk the columns in the schema,
+                // and for each data column create an output column and an external metadata column.
+                foreach (BsonElement bsonElement in document)
+                {
 
-            BsonDocument document = collection.FindOne();
+                    // Try to find a document that has a [non null] value for the particular column.
+                    BsonDocument documentWithNonNullElementValue = collection.FindOne(Query.NE(bsonElement.Name, BsonNull.Value));
 
-            // Walk the columns in the schema,
-            // and for each data column create an output column and an external metadata column.
-            foreach (BsonElement bsonElement in document) {
+                    // If a document is found with a value for the element, use the element with the non-null value
+                    // instead of the original, which may or may not have a value. This will help to ensure that
+                    // a column will not be treated as a string just because some of its values were null.
+                    BsonElement bsonElementWithValue = null;
+                    if (documentWithNonNullElementValue != null)
+                        bsonElementWithValue = documentWithNonNullElementValue.GetElement(bsonElement.Name);
 
-                // Try to find a document that has a [non null] value for the particular column.
-                BsonDocument documentWithNonNullElementValue = collection.FindOne(Query.NE(bsonElement.Name, BsonNull.Value));
+                    IDTSOutputColumn100 outColumn = BuildOutputColumn(output.OutputColumnCollection, bsonElementWithValue ?? bsonElement);
+                    if(output.IsErrorOut)
+                        outColumn.ErrorRowDisposition = DTSRowDisposition.RD_FailComponent;
 
-                // If a document is found with a value for the element, use the element with the non-null value
-                // instead of the original, which may or may not have a value. This will help to ensure that
-                // a column will not be treated as a string just because some of its values were null.
-                BsonElement bsonElementWithValue = null;
-                if (documentWithNonNullElementValue != null)
-                    bsonElementWithValue = documentWithNonNullElementValue.GetElement(bsonElement.Name);
+                    IDTSExternalMetadataColumn100 externalColumn = output.ExternalMetadataColumnCollection.New();
+                    PopulateExternalMetadataColumn(externalColumn, outColumn);
 
-                IDTSOutputColumn100 outColumn = BuildOutputColumn(output.OutputColumnCollection, bsonElementWithValue ?? bsonElement);
+                    // Map the external column to the output column.
+                    outColumn.ExternalMetadataColumnID = externalColumn.ID;
 
-                IDTSExternalMetadataColumn100 externalColumn = output.ExternalMetadataColumnCollection.New();
-                PopulateExternalMetadataColumn(externalColumn, outColumn);
-
-                // Map the external column to the output column.
-                outColumn.ExternalMetadataColumnID = externalColumn.ID;
-
+                }
             }
         }
 
@@ -191,12 +206,20 @@ namespace MongoDataSource {
         }
 
         public override void PreExecute() {
-            this.columnInformation = new ArrayList();
-            IDTSOutput100 output = ComponentMetaData.OutputCollection[0];
+            this.columnInformation = new List<ColumnInfo>();
+            IDTSOutput100 defaultOutput = null;
 
-            foreach (IDTSOutputColumn100 col in output.OutputColumnCollection) {
+            this.GetErrorOutputInfo(ref errorOutputID, ref errorOutputIndex);
+            foreach (IDTSOutput100 output in ComponentMetaData.OutputCollection)
+            {
+                if (output.ID != errorOutputID)
+                    defaultOutput = output;
+            }
+
+            foreach (IDTSOutputColumn100 col in defaultOutput.OutputColumnCollection)
+            {
                 ColumnInfo ci = new ColumnInfo();
-                ci.BufferColumnIndex = BufferManager.FindColumnByLineageID(output.Buffer, col.LineageID);
+                ci.BufferColumnIndex = BufferManager.FindColumnByLineageID(defaultOutput.Buffer, col.LineageID);
                 ci.ColumnName = col.Name;
                 ci.ColumnDataType = col.DataType;
                 this.columnInformation.Add(ci);
@@ -204,10 +227,27 @@ namespace MongoDataSource {
         }
 
 
-        public override void PrimeOutput(int outputs, int[] outputIDs, PipelineBuffer[] buffers) {
-            IDTSOutput100 output = ComponentMetaData.OutputCollection[0];
-            PipelineBuffer buffer = buffers[0];
+        public override void PrimeOutput(int outputs, int[] outputIDs, PipelineBuffer[] buffers)
+        {
             IDTSCustomProperty100 collectionNameProp = ComponentMetaData.CustomPropertyCollection[COLLECTION_NAME_PROP_NAME];
+
+            PipelineBuffer errorBuffer = null;
+            PipelineBuffer defaultBuffer = null;
+
+            for (int x = 0; x < outputs; x++)
+            {
+                if (outputIDs[x] == errorOutputID)
+                    errorBuffer = buffers[x];
+                else
+                    defaultBuffer = buffers[x];
+            }
+
+            IDTSOutput100 errorOutput = null;
+            foreach (IDTSOutput100 output in ComponentMetaData.OutputCollection)
+            {
+                if (output.ID == errorOutputID)
+                    errorOutput = output;
+            }
 
             if (database == null) {
                 AcquireConnections(null);
@@ -223,29 +263,67 @@ namespace MongoDataSource {
 
             var cursor = GetCollectionCursor(collection);
 
-            foreach (BsonDocument document in cursor) {
+            foreach (BsonDocument document in cursor)
+            {
 
-                buffer.AddRow();
-                for (int x = 0; x <= columnInformation.Count - 1; x++) {
-                    ColumnInfo ci = (ColumnInfo)columnInformation[x];
+                int columnIndex = 0;
+                try
+                {
 
-                    try {
-                        if (document.Contains(ci.ColumnName) && document[ci.ColumnName] != null) {
-                            if (document.GetValue(ci.ColumnName).IsBsonNull) {
-                                buffer.SetNull(ci.BufferColumnIndex);
-                            } else {
-                                buffer[ci.BufferColumnIndex] = GetValue(document, ci);
+                    defaultBuffer.AddRow();
+                    foreach (ColumnInfo ci in columnInformation)
+                    {
+                        ColumnInfo currentColumnInfo = ci;
+                        if (document.Contains(ci.ColumnName) && document[ci.ColumnName] != null)
+                        {
+                            if (document.GetValue(ci.ColumnName).IsBsonNull)
+                            {
+                                defaultBuffer.SetNull(ci.BufferColumnIndex);
                             }
-                        } else {
-                            buffer.SetNull(ci.BufferColumnIndex);
+                            else
+                            {
+                                defaultBuffer[ci.BufferColumnIndex] = GetValue(document, ci);
+                            }
                         }
-                    } catch (Exception e) {
-                        throw new Exception("There was an issue with column '" + ci.ColumnName + "'", e);
+                        else
+                        {
+                            defaultBuffer.SetNull(ci.BufferColumnIndex);
+                        }
+                        columnIndex++;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    IDTSOutputColumn100 outputColumn = errorOutput.OutputColumnCollection[columnIndex];
+                    switch (outputColumn.ErrorRowDisposition)
+                    {
+                        case DTSRowDisposition.RD_RedirectRow:
+                            // Add a row to the error buffer.
+                            errorBuffer.AddRow();
+
+                            // Get the values from the default buffer
+                            // and copy them to the error buffer.
+                            for (int x = 0; x < columnInformation.Count; x++)
+                                errorBuffer[x] = defaultBuffer[x];
+
+                            // Set the error information.
+                            int errorCode = System.Runtime.InteropServices.Marshal.GetHRForException(ex);
+                            errorBuffer.SetErrorInfo(errorOutputID, errorCode, outputColumn.LineageID);
+
+                            // Remove the row that was added to the default buffer.
+                            defaultBuffer.RemoveRow();
+                            break;
+                        case DTSRowDisposition.RD_FailComponent:
+                            throw new Exception(String.Format("There was an issue with column: {0}", outputColumn.Name), ex);
                     }
                 }
             }
 
-            buffer.SetEndOfRowset();
+            if (defaultBuffer != null)
+                defaultBuffer.SetEndOfRowset();
+
+            if (errorBuffer != null)
+                errorBuffer.SetEndOfRowset();
         }
 
         private dynamic GetCollectionCursor(dynamic collection) {
