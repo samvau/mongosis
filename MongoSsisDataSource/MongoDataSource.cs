@@ -4,6 +4,7 @@
  */
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Drawing.Design;
 using System.Linq;
@@ -41,10 +42,6 @@ namespace MongoDataSource
         /// </summary>
         private IDTSConnectionManager100 m_ConnMgr;
         /// <summary>
-        /// Collection of metadata about the output columns
-        /// </summary>
-        private List<ColumnInfo> columnInformata;
-        /// <summary>
         /// The ID of the error output
         /// </summary>
         private int errorOutputID = -1;
@@ -53,17 +50,13 @@ namespace MongoDataSource
         /// </summary>
         private int errorOutputIndex = -1;
         /// <summary>
-        /// The output to which the rows are sent when extracted successfully
-        /// </summary>
-        private IDTSOutput100 defaultOutput = null;
-        /// <summary>
-        /// The output to which the rows are sent when there is an extraction error
-        /// </summary>
-        private IDTSOutput100 errorOutput = null;
-        /// <summary>
         /// Connection to the mongo database
         /// </summary>
         private MongoDatabase database;
+        /// <summary>
+        /// Metadata about each of the output columns
+        /// </summary>
+        private IEnumerable<ColumnInfo> columnInformata;
         #endregion
 
         #region PipelineComponent members
@@ -83,7 +76,7 @@ namespace MongoDataSource
             // Specify that the component has an error output.
             ComponentMetaData.UsesDispositions = true;
 
-            defaultOutput = ComponentMetaData.OutputCollection.New();
+            var defaultOutput = ComponentMetaData.OutputCollection.New();
             defaultOutput.Name = "Output";
             defaultOutput.ExternalMetadataColumnCollection.IsUsed = true;
             // Setting these values enables the end-user to configure the error behavior
@@ -91,11 +84,11 @@ namespace MongoDataSource
             defaultOutput.TruncationRowDisposition = DTSRowDisposition.RD_FailComponent;
 
             // Adds an additional output category allowing the end-user to send errors to a different output
-            errorOutput = ComponentMetaData.OutputCollection.New();
+            var errorOutput = ComponentMetaData.OutputCollection.New();
             errorOutput.Name = "ErrorOutput";
             errorOutput.IsErrorOut = true;
 
-            IDTSRuntimeConnection100 conn = ComponentMetaData.RuntimeConnectionCollection.New();
+            var conn = ComponentMetaData.RuntimeConnectionCollection.New();
             conn.Name = MONGODB_CONNECTION_MANAGER_NAME;
         }
 
@@ -104,23 +97,14 @@ namespace MongoDataSource
         ///     and before Microsoft.SqlServer.Dts.Pipeline.PipelineComponent.PrimeOutput(System.Int32,System.Int32[],Microsoft.SqlServer.Dts.Pipeline.PipelineBuffer[])
         ///     and Microsoft.SqlServer.Dts.Pipeline.PipelineComponent.ProcessInput(System.Int32,Microsoft.SqlServer.Dts.Pipeline.PipelineBuffer).
         /// </summary>
+        /// <remarks>
+        /// Sets the error output information; the id of the error output and the index of the error output.
+        /// Gathers the column metadata.
+        /// </remarks>
         public override void PreExecute()
         {
-            if (this.columnInformata == null)
-                throw new ArgumentNullException("columnInformata");
-            if (this.defaultOutput == null)
-                throw new ArgumentNullException("defaultOutput");
-            if (this.errorOutput == null)
-                throw new ArgumentNullException("errorOutput");
-
             this.GetErrorOutputInfo(ref errorOutputID, ref errorOutputIndex);
-
-            // Now that the buffers are prepared, we can determine the index of the buffer that corresponds to each output column
-            foreach (ColumnInfo columnInfo in this.columnInformata)
-            {
-                columnInfo.OuputBufferColumnIndex = BufferManager.FindColumnByLineageID(defaultOutput.Buffer, columnInfo.OutputColumn.LineageID);
-                columnInfo.ErrorOuputBufferColumnIndex = BufferManager.FindColumnByLineageID(errorOutput.Buffer, columnInfo.ErrorOutputColumn.LineageID);
-            }
+            this.columnInformata = GetColumnInformata().ToArray();
         }
 
         /// <summary>
@@ -132,13 +116,6 @@ namespace MongoDataSource
         /// <param name="buffers">An array of Microsoft.SqlServer.Dts.Pipeline.PipelineBuffer objects.</param>
         public override void PrimeOutput(int outputs, int[] outputIDs, PipelineBuffer[] buffers)
         {
-            if (outputs != 2)
-                throw new ArgumentOutOfRangeException("outputs", outputs, "should be set to 2");
-            if (outputIDs.Length != outputs)
-                throw new ArgumentOutOfRangeException("outputIDs", outputIDs.Length, string.Format("size of array should be {0}", outputs));
-            if (buffers.Length != outputs)
-                throw new ArgumentOutOfRangeException("buffers", buffers.Length, string.Format("size of array should be {0}", outputs));
-
             // Determine which buffer is for regular output, and which is for error output
             PipelineBuffer errorBuffer = null;
             PipelineBuffer defaultBuffer = null;
@@ -149,15 +126,17 @@ namespace MongoDataSource
                     defaultBuffer = buffers[outputIndex];
 
             var cursor = GetCollectionCursor(ComponentMetaData.CustomPropertyCollection[COLLECTION_NAME_PROP_NAME].Value);
+            var defaultOutputColumns = GetDefaultOutputColumns().ToArray();
+            var errorOutputColumns = GetErrorOutputColumns().ToArray();
             foreach (BsonDocument document in cursor)
             {
-                ColumnInfo currentColumnInfo = null;
+                ColumnInfo failingColumnInfo = null;
                 try
                 {
                     defaultBuffer.AddRow();
-                    foreach (ColumnInfo columnInfo in columnInformata)
+                    foreach (ColumnInfo columnInfo in this.columnInformata)
                     {
-                        currentColumnInfo = columnInfo;
+                        failingColumnInfo = columnInfo;
                         if (document.Contains(columnInfo.ColumnName) && document[columnInfo.ColumnName] != null)
                         {
                             if (document.GetValue(columnInfo.ColumnName).IsBsonNull)
@@ -177,28 +156,32 @@ namespace MongoDataSource
                 }
                 catch (Exception ex)
                 {
-                    switch (currentColumnInfo.OutputColumn.ErrorRowDisposition)
+                    switch (failingColumnInfo.OutputColumn.ErrorRowDisposition)
                     {
                         case DTSRowDisposition.RD_RedirectRow:
+                            if (errorBuffer == null) throw new InvalidOperationException("There must be an error output defined if redirection was specified");
+
                             // Add a row to the error buffer.
                             errorBuffer.AddRow();
 
                             // Get the values from the default buffer
                             // and copy them to the error buffer.
-                            foreach (ColumnInfo columnInfo in columnInformata)
+                            foreach (IDTSOutputColumn100 column in errorOutputColumns)
                             {
-                                errorBuffer[columnInfo.ErrorOuputBufferColumnIndex] = defaultBuffer[columnInfo.OuputBufferColumnIndex];
+                                ColumnInfo copiedColumnInfo = GetColumnInfo(column.Name);
+                                if (copiedColumnInfo != null)
+                                    errorBuffer[copiedColumnInfo.ErrorOuputBufferColumnIndex] = defaultBuffer[copiedColumnInfo.OuputBufferColumnIndex];
                             }
 
                             // Set the error information.
                             int errorCode = System.Runtime.InteropServices.Marshal.GetHRForException(ex);
-                            errorBuffer.SetErrorInfo(errorOutputID, errorCode, currentColumnInfo.OutputColumn.LineageID);
+                            errorBuffer.SetErrorInfo(errorOutputID, errorCode, failingColumnInfo.OutputColumn.LineageID);
 
                             // Remove the row that was added to the default buffer.
                             defaultBuffer.RemoveRow();
                             break;
                         case DTSRowDisposition.RD_FailComponent:
-                            throw new Exception(String.Format("There was an issue with column: {0}", currentColumnInfo.OutputColumn.Name), ex);
+                            throw new Exception(String.Format("There was an issue with column: {0}", failingColumnInfo.OutputColumn.Name), ex);
                     }
                 }
             }
@@ -309,8 +292,6 @@ namespace MongoDataSource
         /// <param name="collectionName">The name of the mongo db collection</param>
         private void CreateColumnsFromMongoDb(string collectionName)
         {
-            this.columnInformata = new List<ColumnInfo>();
-
             if (database == null)
                 AcquireConnections(null);
 
@@ -356,9 +337,6 @@ namespace MongoDataSource
                 if (documentWithNonNullElementValue != null)
                     bsonElementWithValue = documentWithNonNullElementValue.GetElement(bsonElement.Name);
 
-                ColumnInfo columnInfo = new ColumnInfo();
-                this.columnInformata.Add(columnInfo);
-
                 foreach (IDTSOutput100 output in ComponentMetaData.OutputCollection)
                 {
                     IDTSOutputColumn100 outColumn = BuildOutputColumn(output, bsonElementWithValue ?? bsonElement);
@@ -366,14 +344,6 @@ namespace MongoDataSource
 
                     // Map the external column to the output column.
                     outColumn.ExternalMetadataColumnID = externalColumn.ID;
-
-                    if (output.IsErrorOut)
-                        columnInfo.ErrorOutputColumn = outColumn;
-                    else
-                        columnInfo.OutputColumn = outColumn;
-
-                    columnInfo.ColumnName = outColumn.Name;
-                    columnInfo.ColumnDataType = outColumn.DataType;
                 }
             }
         }
@@ -643,9 +613,94 @@ namespace MongoDataSource
             }
         }
 
+        /// <summary>
+        /// Returns the column information for the column with the provided name
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
         private ColumnInfo GetColumnInfo(String name)
         {
-            return columnInformata.FirstOrDefault(ci => ci.ColumnName.Equals(name));
+            return this.columnInformata.FirstOrDefault(ci => ci.ColumnName.Equals(name));
+        }
+
+        /// <summary>
+        /// Collects the column information for the output columns
+        /// </summary>
+        /// <returns></returns>
+        private IEnumerable<ColumnInfo> GetColumnInformata()
+        {
+            var query = from outputColumn in GetDefaultOutputColumns()
+                        join errorOutputColumn in GetErrorOutputColumns() on outputColumn.Name equals errorOutputColumn.Name into joinO
+                        from subErrorOutputColum in joinO.DefaultIfEmpty()
+                        select new { OutputColumn = outputColumn, ErrorOutputColumn = subErrorOutputColum };
+
+            return query.Select(o => new ColumnInfo()
+            {
+                ColumnDataType = o.OutputColumn.DataType,
+                ColumnName = o.OutputColumn.Name,
+                OutputColumn = o.OutputColumn,
+                ErrorOutputColumn = o.ErrorOutputColumn,
+                OuputBufferColumnIndex = BufferManager.FindColumnByLineageID(GetDefaultOutput().Buffer, o.OutputColumn.LineageID),
+                ErrorOuputBufferColumnIndex = o.ErrorOutputColumn != null && GetErrorOutput().IsAttached ?
+                    BufferManager.FindColumnByLineageID(GetErrorOutput().Buffer, o.ErrorOutputColumn.LineageID) : 0
+            });
+        }
+
+        /// <summary>
+        /// Locates the default output.
+        /// Raises an exception if there is no default output.
+        /// </summary>
+        /// <returns></returns>
+        private IDTSOutput100 GetDefaultOutput()
+        {
+            foreach (IDTSOutput100 output in ComponentMetaData.OutputCollection)
+                if (!output.IsErrorOut)
+                    return output;
+
+            throw new InvalidOperationException("There is no default output defined");
+        }
+
+        /// <summary>
+        /// Locates the error output.
+        /// Raises an exception if there is no error output.
+        /// </summary>
+        /// <returns></returns>
+        private IDTSOutput100 GetErrorOutput()
+        {
+            foreach (IDTSOutput100 output in ComponentMetaData.OutputCollection)
+                if (output.IsErrorOut)
+                    return output;
+
+            throw new InvalidOperationException("There is no error output defined");
+        }
+
+        /// <summary>
+        /// Gets the output columns for the default output
+        /// </summary>
+        /// <returns></returns>
+        private IEnumerable<IDTSOutputColumn100> GetDefaultOutputColumns()
+        {
+            return GetOutputColumns(GetDefaultOutput());
+        }
+
+        /// <summary>
+        /// Gets the output columns for the error output
+        /// </summary>
+        /// <returns></returns>
+        private IEnumerable<IDTSOutputColumn100> GetErrorOutputColumns()
+        {
+            return GetOutputColumns(GetErrorOutput());
+        }
+
+        /// <summary>
+        /// For the provided output, collects the output columns in an IEnumerable
+        /// </summary>
+        /// <param name="output"></param>
+        /// <returns></returns>
+        private static IEnumerable<IDTSOutputColumn100> GetOutputColumns(IDTSOutput100 output)
+        {
+            foreach (IDTSOutputColumn100 column in output.OutputColumnCollection)
+                yield return column;
         }
         #endregion
     }
