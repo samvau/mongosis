@@ -26,20 +26,52 @@ namespace MongoDataSource
         IconResource = "MongoDataSource.Resources.mongosis.ico")]
     public class MongoDataSource : PipelineComponent
     {
+        #region constants
+        private const string COLLECTION_NAME_PROP_NAME = "CollectionName";
+        private const string CONDITIONAL_FIELD_PROP_NAME = "ConditionalFieldName";
+        private const string CONDITION_FROM_PROP_NAME = "ConditionFromValue";
+        private const string CONDITION_TO_PROP_NAME = "ConditionToValue";
+        private const string CONDITION_DOC_PROP_NAME = "ConditionQuery";
+        internal const string MONGODB_CONNECTION_MANAGER_NAME = "MongoDB";
+        #endregion
 
-        private static string COLLECTION_NAME_PROP_NAME = "CollectionName";
-        private static string CONDITIONAL_FIELD_PROP_NAME = "ConditionalFieldName";
-        private static string CONDITION_FROM_PROP_NAME = "ConditionFromValue";
-        private static string CONDITION_TO_PROP_NAME = "ConditionToValue";
-        private static string CONDITION_DOC_PROP_NAME = "ConditionQuery";
-        internal static string MONGODB_CONNECTION_MANAGER_NAME = "MongoDB";
-
+        #region private variables
+        /// <summary>
+        /// Connection manager for the mongo database
+        /// </summary>
         private IDTSConnectionManager100 m_ConnMgr;
-        private Dictionary<ColumnInfo, ColumnInfo> columnInformation;
+        /// <summary>
+        /// Collection of metadata about the output columns
+        /// </summary>
+        private List<ColumnInfo> columnInformata;
+        /// <summary>
+        /// The ID of the error output
+        /// </summary>
         private int errorOutputID = -1;
+        /// <summary>
+        /// The index of the error output in the outputs collection
+        /// </summary>
         private int errorOutputIndex = -1;
+        /// <summary>
+        /// The output to which the rows are sent when extracted successfully
+        /// </summary>
+        private IDTSOutput100 defaultOutput = null;
+        /// <summary>
+        /// The output to which the rows are sent when there is an extraction error
+        /// </summary>
+        private IDTSOutput100 errorOutput = null;
+        /// <summary>
+        /// Connection to the mongo database
+        /// </summary>
         private MongoDatabase database;
+        #endregion
 
+        #region PipelineComponent members
+        /// <summary>
+        /// Called when a component is first added to the data flow task, to initialize
+        ///     the Microsoft.SqlServer.Dts.Pipeline.PipelineComponent.ComponentMetaData
+        ///     of the component.
+        /// </summary>
         public override void ProvideComponentProperties()
         {
             // Allow for resetting the component.
@@ -51,14 +83,15 @@ namespace MongoDataSource
             // Specify that the component has an error output.
             ComponentMetaData.UsesDispositions = true;
 
-            IDTSOutput100 output = ComponentMetaData.OutputCollection.New();
-            output.Name = "Output";
+            defaultOutput = ComponentMetaData.OutputCollection.New();
+            defaultOutput.Name = "Output";
+            defaultOutput.ExternalMetadataColumnCollection.IsUsed = true;
             // Setting these values enables the end-user to configure the error behavior
-            output.ErrorRowDisposition = DTSRowDisposition.RD_FailComponent;
-            output.TruncationRowDisposition = DTSRowDisposition.RD_FailComponent;
+            defaultOutput.ErrorRowDisposition = DTSRowDisposition.RD_FailComponent;
+            defaultOutput.TruncationRowDisposition = DTSRowDisposition.RD_FailComponent;
 
             // Adds an additional output category allowing the end-user to send errors to a different output
-            IDTSOutput100 errorOutput = ComponentMetaData.OutputCollection.New();
+            errorOutput = ComponentMetaData.OutputCollection.New();
             errorOutput.Name = "ErrorOutput";
             errorOutput.IsErrorOut = true;
 
@@ -66,32 +99,125 @@ namespace MongoDataSource
             conn.Name = MONGODB_CONNECTION_MANAGER_NAME;
         }
 
-        private void AddCustomProperties(IDTSCustomPropertyCollection100 customPropertyCollection)
+        /// <summary>
+        /// Called after Microsoft.SqlServer.Dts.Pipeline.PipelineComponent.PrepareForExecute(),
+        ///     and before Microsoft.SqlServer.Dts.Pipeline.PipelineComponent.PrimeOutput(System.Int32,System.Int32[],Microsoft.SqlServer.Dts.Pipeline.PipelineBuffer[])
+        ///     and Microsoft.SqlServer.Dts.Pipeline.PipelineComponent.ProcessInput(System.Int32,Microsoft.SqlServer.Dts.Pipeline.PipelineBuffer).
+        /// </summary>
+        public override void PreExecute()
         {
-            IDTSCustomProperty100 customProperty = createCustomProperty(customPropertyCollection, COLLECTION_NAME_PROP_NAME, "Name of collection to import data from");
-            customProperty.UITypeEditor = typeof(CollectionNameEditor).AssemblyQualifiedName;
+            if (this.columnInformata == null)
+                throw new ArgumentNullException("columnInformata");
+            if (this.defaultOutput == null)
+                throw new ArgumentNullException("defaultOutput");
+            if (this.errorOutput == null)
+                throw new ArgumentNullException("errorOutput");
 
-            customProperty = createCustomProperty(customPropertyCollection, CONDITIONAL_FIELD_PROP_NAME, "Field name for conditional query");
+            this.GetErrorOutputInfo(ref errorOutputID, ref errorOutputIndex);
 
-            createCustomProperty(customPropertyCollection, CONDITION_FROM_PROP_NAME, "'From' value for conditional query");
-            createCustomProperty(customPropertyCollection, CONDITION_TO_PROP_NAME, "'To' value for conditional query");
-            createCustomProperty(customPropertyCollection, CONDITION_DOC_PROP_NAME, "Mongo query document for conditional query");
+            // Now that the buffers are prepared, we can determine the index of the buffer that corresponds to each output column
+            foreach (ColumnInfo columnInfo in this.columnInformata)
+            {
+                columnInfo.OuputBufferColumnIndex = BufferManager.FindColumnByLineageID(defaultOutput.Buffer, columnInfo.OutputColumn.LineageID);
+                columnInfo.ErrorOuputBufferColumnIndex = BufferManager.FindColumnByLineageID(errorOutput.Buffer, columnInfo.ErrorOutputColumn.LineageID);
+            }
         }
 
-        private IDTSCustomProperty100 createCustomProperty(IDTSCustomPropertyCollection100 customPropertyCollection, string name, string description)
+        /// <summary>
+        /// Called at run time for source components and transformation components with
+        ///     asynchronous outputs to let these components add rows to the output buffers.
+        /// </summary>
+        /// <param name="outputs">The number of elements in the outputIDs and buffers arrays.</param>
+        /// <param name="outputIDs">An array of Microsoft.SqlServer.Dts.Pipeline.Wrapper.IDTSOutput100 ID's.</param>
+        /// <param name="buffers">An array of Microsoft.SqlServer.Dts.Pipeline.PipelineBuffer objects.</param>
+        public override void PrimeOutput(int outputs, int[] outputIDs, PipelineBuffer[] buffers)
         {
-            IDTSCustomProperty100 customProperty = customPropertyCollection.New();
-            customProperty.Description = description;
-            customProperty.Name = name;
+            if (outputs != 2)
+                throw new ArgumentOutOfRangeException("outputs", outputs, "should be set to 2");
+            if (outputIDs.Length != outputs)
+                throw new ArgumentOutOfRangeException("outputIDs", outputIDs.Length, string.Format("size of array should be {0}", outputs));
+            if (buffers.Length != outputs)
+                throw new ArgumentOutOfRangeException("buffers", buffers.Length, string.Format("size of array should be {0}", outputs));
 
-            return customProperty;
+            // Determine which buffer is for regular output, and which is for error output
+            PipelineBuffer errorBuffer = null;
+            PipelineBuffer defaultBuffer = null;
+            for (int outputIndex = 0; outputIndex < outputs; outputIndex++)
+                if (outputIDs[outputIndex] == errorOutputID)
+                    errorBuffer = buffers[outputIndex];
+                else
+                    defaultBuffer = buffers[outputIndex];
+
+            var cursor = GetCollectionCursor(ComponentMetaData.CustomPropertyCollection[COLLECTION_NAME_PROP_NAME].Value);
+            foreach (BsonDocument document in cursor)
+            {
+                ColumnInfo currentColumnInfo = null;
+                try
+                {
+                    defaultBuffer.AddRow();
+                    foreach (ColumnInfo columnInfo in columnInformata)
+                    {
+                        currentColumnInfo = columnInfo;
+                        if (document.Contains(columnInfo.ColumnName) && document[columnInfo.ColumnName] != null)
+                        {
+                            if (document.GetValue(columnInfo.ColumnName).IsBsonNull)
+                            {
+                                defaultBuffer.SetNull(columnInfo.OuputBufferColumnIndex);
+                            }
+                            else
+                            {
+                                defaultBuffer[columnInfo.OuputBufferColumnIndex] = GetValue(document, columnInfo);
+                            }
+                        }
+                        else
+                        {
+                            defaultBuffer.SetNull(columnInfo.OuputBufferColumnIndex);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    switch (currentColumnInfo.OutputColumn.ErrorRowDisposition)
+                    {
+                        case DTSRowDisposition.RD_RedirectRow:
+                            // Add a row to the error buffer.
+                            errorBuffer.AddRow();
+
+                            // Get the values from the default buffer
+                            // and copy them to the error buffer.
+                            foreach (ColumnInfo columnInfo in columnInformata)
+                            {
+                                errorBuffer[columnInfo.ErrorOuputBufferColumnIndex] = defaultBuffer[columnInfo.OuputBufferColumnIndex];
+                            }
+
+                            // Set the error information.
+                            int errorCode = System.Runtime.InteropServices.Marshal.GetHRForException(ex);
+                            errorBuffer.SetErrorInfo(errorOutputID, errorCode, currentColumnInfo.OutputColumn.LineageID);
+
+                            // Remove the row that was added to the default buffer.
+                            defaultBuffer.RemoveRow();
+                            break;
+                        case DTSRowDisposition.RD_FailComponent:
+                            throw new Exception(String.Format("There was an issue with column: {0}", currentColumnInfo.OutputColumn.Name), ex);
+                    }
+                }
+            }
+
+            if (defaultBuffer != null)
+                defaultBuffer.SetEndOfRowset();
+
+            if (errorBuffer != null)
+                errorBuffer.SetEndOfRowset();
         }
 
-        private IDTSCustomPropertyCollection100 GetCustomPropertyCollection()
-        {
-            return ComponentMetaData.CustomPropertyCollection;
-        }
-
+        /// <summary>
+        /// Assigns a value to a Microsoft.SqlServer.Dts.Pipeline.Wrapper.IDTSCustomProperty100
+        ///     of the component.
+        /// </summary>
+        /// <remarks>We override this in order to determine the output columns each time the mongo db collection name is updated</remarks>
+        /// <param name="propertyName">The name of the Microsoft.SqlServer.Dts.Pipeline.Wrapper.IDTSCustomProperty100 whose value is set.</param>
+        /// <param name="propertyValue">The object stored in the Value property of the Microsoft.SqlServer.Dts.Pipeline.Wrapper.IDTSCustomProperty100 object.</param>
+        /// <returns>The Microsoft.SqlServer.Dts.Pipeline.Wrapper.IDTSCustomProperty100 object whose property is set.</returns>
         public override Microsoft.SqlServer.Dts.Pipeline.Wrapper.IDTSCustomProperty100 SetComponentProperty(string propertyName, object propertyValue)
         {
             if (propertyName.Equals("CollectionName"))
@@ -102,44 +228,116 @@ namespace MongoDataSource
             return base.SetComponentProperty(propertyName, propertyValue);
         }
 
+        /// <summary>
+        /// Establishes a connection to a connection manager.
+        /// <param name="transaction">The transaction the connection is participating in. (optional)</param>
         public override void AcquireConnections(object transaction)
         {
             if (ComponentMetaData.RuntimeConnectionCollection.Count > 0)
             {
                 IDTSRuntimeConnection100 conn = ComponentMetaData.RuntimeConnectionCollection[0];
                 m_ConnMgr = conn.ConnectionManager;
-
                 database = (MongoDatabase)m_ConnMgr.AcquireConnection(null);
             }
         }
 
+        /// <summary>
+        /// Frees the connections established during Microsoft.SqlServer.Dts.Pipeline.PipelineComponent.AcquireConnections(System.Object).
+        ///     Called at design time and run time.
+        /// </summary>
         public override void ReleaseConnections()
         {
             if (m_ConnMgr != null)
-            {
                 m_ConnMgr.ReleaseConnection(database);
-            }
         }
 
+        /// <summary>
+        /// Sets the data type properties of an Microsoft.SqlServer.Dts.Pipeline.Wrapper.IDTSOutputColumn100
+        ///     object.
+        /// </summary>
+        /// <param name="iOutputID">The ID of the Microsoft.SqlServer.Dts.Pipeline.Wrapper.IDTSOutput100 object.</param>
+        /// <param name="iOutputColumnID">The ID of the Microsoft.SqlServer.Dts.Pipeline.Wrapper.IDTSOutputColumn100 object.</param>
+        /// <param name="eDataType">The Microsoft.SqlServer.Dts.Runtime.Wrapper.DataType of the column.</param>
+        /// <param name="iLength">The length of the column.</param>
+        /// <param name="iPrecision">The total number of digits in the column.</param>
+        /// <param name="iScale">The number of digits of precision in the column.</param>
+        /// <param name="iCodePage">The code page of the column.</param>
         public override void SetOutputColumnDataTypeProperties(int iOutputID, int iOutputColumnID, Microsoft.SqlServer.Dts.Runtime.Wrapper.DataType eDataType, int iLength, int iPrecision, int iScale, int iCodePage)
         {
-            IDTSOutputColumn100 outColumn = ComponentMetaData.OutputCollection[0].OutputColumnCollection.GetObjectByID(iOutputColumnID);
-
+            var output = ComponentMetaData.OutputCollection.FindObjectByID(iOutputID);
+            var outColumn = output.OutputColumnCollection.GetObjectByID(iOutputColumnID);
             outColumn.SetDataTypeProperties(eDataType, iLength, iPrecision, iScale, iCodePage);
         }
+        #endregion
 
+        #region private methods
+        /// <summary>
+        /// Adds the custom properties for specifying the mongo db connection and optional query parameters
+        /// </summary>
+        /// <param name="customPropertyCollection"></param>
+        private void AddCustomProperties(IDTSCustomPropertyCollection100 customPropertyCollection)
+        {
+            var customProperty = createCustomProperty(customPropertyCollection, COLLECTION_NAME_PROP_NAME, "Name of collection to import data from");
+            customProperty.UITypeEditor = typeof(CollectionNameEditor).AssemblyQualifiedName;
+
+            createCustomProperty(customPropertyCollection, CONDITIONAL_FIELD_PROP_NAME, "Field name for conditional query");
+            createCustomProperty(customPropertyCollection, CONDITION_FROM_PROP_NAME, "'From' value for conditional query");
+            createCustomProperty(customPropertyCollection, CONDITION_TO_PROP_NAME, "'To' value for conditional query");
+            createCustomProperty(customPropertyCollection, CONDITION_DOC_PROP_NAME, "Mongo query document for conditional query");
+        }
+
+        /// <summary>
+        /// Helper for adding a custom property to the provided collection
+        /// </summary>
+        /// <param name="customPropertyCollection"></param>
+        /// <param name="name"></param>
+        /// <param name="description"></param>
+        /// <returns></returns>
+        private IDTSCustomProperty100 createCustomProperty(IDTSCustomPropertyCollection100 customPropertyCollection, string name, string description)
+        {
+            IDTSCustomProperty100 customProperty = customPropertyCollection.New();
+            customProperty.Description = description;
+            customProperty.Name = name;
+
+            return customProperty;
+        }
+
+        /// <summary>
+        /// For the provided collection, will attempt to determine the name and type of each column in the collection.
+        /// Adds the columns to both the default and error outputs.
+        /// </summary>
+        /// <param name="collectionName">The name of the mongo db collection</param>
         private void CreateColumnsFromMongoDb(string collectionName)
         {
+            this.columnInformata = new List<ColumnInfo>();
+
             if (database == null)
-            {
                 AcquireConnections(null);
-            }
 
             MongoCollection<BsonDocument> collection = database.GetCollection(collectionName);
 
             if (collection.Count() == 0)
-            {
                 throw new Exception(collectionName + " collection has no records");
+
+            // Remove the existing columns from the output in order to prevent us from adding duplicate columns
+            foreach (IDTSOutput100 output in ComponentMetaData.OutputCollection)
+            {
+                if (output.IsErrorOut)
+                {
+                    List<IDTSOutputColumn100> columns = new List<IDTSOutputColumn100>();
+                    for (int i = 0; i < output.OutputColumnCollection.Count; i++)
+                        columns.Add(output.OutputColumnCollection[i]);
+
+                    string[] errorColumns = new string[] { "ErrorColumn", "ErrorCode" };
+                    IEnumerable<int> columnIdsToRemove = columns.Where(column => !errorColumns.Contains(column.Name)).Select(column => column.ID);
+                    foreach (int columnIdToRemove in columnIdsToRemove)
+                        output.OutputColumnCollection.RemoveObjectByID(columnIdToRemove);
+                }
+                else
+                {
+                    output.OutputColumnCollection.RemoveAll();
+                    output.ExternalMetadataColumnCollection.RemoveAll();
+                }
             }
 
             BsonDocument document = collection.FindOne();
@@ -158,30 +356,37 @@ namespace MongoDataSource
                 if (documentWithNonNullElementValue != null)
                     bsonElementWithValue = documentWithNonNullElementValue.GetElement(bsonElement.Name);
 
+                ColumnInfo columnInfo = new ColumnInfo();
+                this.columnInformata.Add(columnInfo);
+
                 foreach (IDTSOutput100 output in ComponentMetaData.OutputCollection)
                 {
-                    IDTSOutputColumn100 outColumn = BuildOutputColumn(output.OutputColumnCollection, bsonElementWithValue ?? bsonElement);
-
-                    // Setting these values enables the end-user to configure the error behavior on a per-column basis
-                    if (!output.IsErrorOut)
-                    {
-                        outColumn.ErrorRowDisposition = DTSRowDisposition.RD_FailComponent;
-                        outColumn.TruncationRowDisposition = DTSRowDisposition.RD_FailComponent;
-                    }
-
-                    IDTSExternalMetadataColumn100 externalColumn = output.ExternalMetadataColumnCollection.New();
-                    PopulateExternalMetadataColumn(externalColumn, outColumn);
+                    IDTSOutputColumn100 outColumn = BuildOutputColumn(output, bsonElementWithValue ?? bsonElement);
+                    IDTSExternalMetadataColumn100 externalColumn = BuildExternalMetadataColumn(output.ExternalMetadataColumnCollection, outColumn);
 
                     // Map the external column to the output column.
                     outColumn.ExternalMetadataColumnID = externalColumn.ID;
+
+                    if (output.IsErrorOut)
+                        columnInfo.ErrorOutputColumn = outColumn;
+                    else
+                        columnInfo.OutputColumn = outColumn;
+
+                    columnInfo.ColumnName = outColumn.Name;
+                    columnInfo.ColumnDataType = outColumn.DataType;
                 }
             }
-
         }
 
-        private IDTSOutputColumn100 BuildOutputColumn(IDTSOutputColumnCollection100 outputColumnCollection, BsonElement bsonElement)
+        /// <summary>
+        /// Constructs an output column and adds it to the provided output, using the column metadata from the provided BSON element.
+        /// </summary>
+        /// <param name="output"></param>
+        /// <param name="bsonElement"></param>
+        /// <returns></returns>
+        private IDTSOutputColumn100 BuildOutputColumn(IDTSOutput100 output, BsonElement bsonElement)
         {
-            IDTSOutputColumn100 outColumn = outputColumnCollection.New();
+            IDTSOutputColumn100 outColumn = output.OutputColumnCollection.New();
 
             // Set the properties of the output column.
             outColumn.Name = bsonElement.Name;
@@ -198,18 +403,39 @@ namespace MongoDataSource
 
             outColumn.SetDataTypeProperties(dt, length, 0, 0, codepage);
 
+            // Setting these values enables the end-user to configure the error behavior on a per-column basis
+            if (!output.IsErrorOut)
+            {
+                outColumn.ErrorRowDisposition = DTSRowDisposition.RD_FailComponent;
+                outColumn.TruncationRowDisposition = DTSRowDisposition.RD_FailComponent;
+            }
+
             return outColumn;
         }
 
-        private void PopulateExternalMetadataColumn(IDTSExternalMetadataColumn100 externalColumnToPopulate, IDTSOutputColumn100 outputColumn)
+        /// <summary>
+        /// Constructs an external metadata column and adds it to the provided collection, using the column metadata from the provided output column.
+        /// </summary>
+        /// <param name="externalMetadataColumnCollection"></param>
+        /// <param name="outputColumn"></param>
+        /// <returns></returns>
+        private IDTSExternalMetadataColumn100 BuildExternalMetadataColumn(IDTSExternalMetadataColumnCollection100 externalMetadataColumnCollection, IDTSOutputColumn100 outputColumn)
         {
+            IDTSExternalMetadataColumn100 externalColumnToPopulate = externalMetadataColumnCollection.New();
             externalColumnToPopulate.Name = outputColumn.Name;
             externalColumnToPopulate.Precision = outputColumn.Precision;
             externalColumnToPopulate.Length = outputColumn.Length;
             externalColumnToPopulate.DataType = outputColumn.DataType;
             externalColumnToPopulate.Scale = outputColumn.Scale;
+            externalColumnToPopulate.CodePage = outputColumn.CodePage;
+            return externalColumnToPopulate;
         }
 
+        /// <summary>
+        /// Determines the data type corresponding to the provided mongo db value
+        /// </summary>
+        /// <param name="mongoValue"></param>
+        /// <returns></returns>
         private DataType GetColumnDataType(BsonValue mongoValue)
         {
             DataType dt = DataType.DT_STR;
@@ -234,153 +460,23 @@ namespace MongoDataSource
             return dt;
         }
 
-        public override void PreExecute()
+        /// <summary>
+        /// Creates a cursor for accessing the data in the provided collection. Applies a custom query if the parameters specify
+        /// </summary>
+        /// <param name="collectionName"></param>
+        /// <returns></returns>
+        private dynamic GetCollectionCursor(string collectionName)
         {
-            this.columnInformation = new Dictionary<ColumnInfo, ColumnInfo>();
-            this.GetErrorOutputInfo(ref errorOutputID, ref errorOutputIndex);
-
-            IDTSOutput100 defaultOutput = null;
-            IDTSOutput100 errorOutput = null;
-            foreach (IDTSOutput100 output in ComponentMetaData.OutputCollection)
-                if (output.ID != errorOutputID)
-                {
-                    defaultOutput = output;
-                }
-                else
-                {
-                    errorOutput = output;
-                }
-
-            foreach (IDTSOutputColumn100 col in defaultOutput.OutputColumnCollection)
-            {
-                ColumnInfo ci = new ColumnInfo();
-                ci.BufferColumnIndex = BufferManager.FindColumnByLineageID(defaultOutput.Buffer, col.LineageID);
-                ci.ColumnName = col.Name;
-                ci.ColumnDataType = col.DataType;
-
-                IDTSOutputColumn100 errCol = null;
-                foreach (IDTSOutputColumn100 c in errorOutput.OutputColumnCollection)
-                    if (c.Name == col.Name)
-                    {
-                        errCol = c;
-                        break;
-                    }
-
-                ColumnInfo errCi = new ColumnInfo();
-                errCi.BufferColumnIndex = BufferManager.FindColumnByLineageID(errorOutput.Buffer, errCol.LineageID);
-                errCi.ColumnName = col.Name;
-                errCi.ColumnDataType = col.DataType;
-
-                this.columnInformation.Add(ci, errCi);
-            }
-        }
-
-
-        public override void PrimeOutput(int outputs, int[] outputIDs, PipelineBuffer[] buffers)
-        {
-            IDTSCustomProperty100 collectionNameProp = ComponentMetaData.CustomPropertyCollection[COLLECTION_NAME_PROP_NAME];
-
-            PipelineBuffer errorBuffer = null;
-            PipelineBuffer defaultBuffer = null;
-
-            for (int x = 0; x < outputs; x++)
-            {
-                if (outputIDs[x] == errorOutputID)
-                    errorBuffer = buffers[x];
-                else
-                    defaultBuffer = buffers[x];
-            }
-
-            IDTSOutput100 defaultOutput = null;
-            foreach (IDTSOutput100 output in ComponentMetaData.OutputCollection)
-                if (output.ID != errorOutputID)
-                {
-                    defaultOutput = output;
-                    break;
-                }
-
             if (database == null)
-            {
                 AcquireConnections(null);
-            }
 
-            if (string.IsNullOrEmpty(collectionNameProp.Value))
-            {
-                throw new Exception("The collection name is null or empty!");
-            }
+            if (string.IsNullOrWhiteSpace(collectionName))
+                throw new ArgumentNullException("collectionName");
 
-            ComponentMetaData.FireInformation(0, "MongoDataSource", "processing collection " + collectionNameProp.Value, String.Empty, 0, false);
+            ComponentMetaData.FireInformation(0, "MongoDataSource", "processing collection " + collectionName, String.Empty, 0, false);
 
-            var collection = database.GetCollection(collectionNameProp.Value);
+            var collection = database.GetCollection(collectionName);
 
-            var cursor = GetCollectionCursor(collection);
-
-            foreach (BsonDocument document in cursor)
-            {
-                int columnIndex = 0;
-                ColumnInfo currentColumnInfo = null;
-                try
-                {
-                    defaultBuffer.AddRow();
-                    foreach (ColumnInfo ci in columnInformation.Keys)
-                    {
-                        currentColumnInfo = ci;
-                        if (document.Contains(ci.ColumnName) && document[ci.ColumnName] != null)
-                        {
-                            if (document.GetValue(ci.ColumnName).IsBsonNull)
-                            {
-                                defaultBuffer.SetNull(ci.BufferColumnIndex);
-                            }
-                            else
-                            {
-                                defaultBuffer[ci.BufferColumnIndex] = GetValue(document, ci);
-                            }
-                        }
-                        else
-                        {
-                            defaultBuffer.SetNull(ci.BufferColumnIndex);
-                        }
-                        columnIndex++;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    IDTSOutputColumn100 outputColumn = defaultOutput.OutputColumnCollection[columnIndex];
-                    switch (outputColumn.ErrorRowDisposition)
-                    {
-                        case DTSRowDisposition.RD_RedirectRow:
-                            // Add a row to the error buffer.
-                            errorBuffer.AddRow();
-
-                            // Get the values from the default buffer
-                            // and copy them to the error buffer.
-                            foreach (KeyValuePair<ColumnInfo, ColumnInfo> columnInfo in columnInformation)
-                            {
-                                errorBuffer[columnInfo.Value.BufferColumnIndex] = defaultBuffer[columnInfo.Key.BufferColumnIndex];
-                            }
-
-                            // Set the error information.
-                            int errorCode = System.Runtime.InteropServices.Marshal.GetHRForException(ex);
-                            errorBuffer.SetErrorInfo(errorOutputID, errorCode, outputColumn.LineageID);
-
-                            // Remove the row that was added to the default buffer.
-                            defaultBuffer.RemoveRow();
-                            break;
-                        case DTSRowDisposition.RD_FailComponent:
-                            throw new Exception(String.Format("There was an issue with column: {0}", outputColumn.Name), ex);
-                    }
-                }
-            }
-
-            if (defaultBuffer != null)
-                defaultBuffer.SetEndOfRowset();
-
-            if (errorBuffer != null)
-                errorBuffer.SetEndOfRowset();
-        }
-
-        private dynamic GetCollectionCursor(dynamic collection)
-        {
             IDTSCustomProperty100 queryProp = ComponentMetaData.CustomPropertyCollection[CONDITION_DOC_PROP_NAME];
             IDTSCustomProperty100 conditionalFieldProp = ComponentMetaData.CustomPropertyCollection[CONDITIONAL_FIELD_PROP_NAME];
 
@@ -424,9 +520,7 @@ namespace MongoDataSource
             ColumnInfo info = GetColumnInfo(fieldName);
 
             if (info == null)
-            {
                 throw new Exception("No information was found for the column '" + fieldName + "', ensure the column name is correct");
-            }
 
             return ParseConditionValue(value, info.ColumnDataType);
         }
@@ -551,23 +645,20 @@ namespace MongoDataSource
 
         private ColumnInfo GetColumnInfo(String name)
         {
-            foreach (ColumnInfo info in columnInformation.Keys)
-            {
-                if (info.ColumnName.Equals(name))
-                {
-                    return info;
-                }
-            }
-            return null;
+            return columnInformata.FirstOrDefault(ci => ci.ColumnName.Equals(name));
         }
-
+        #endregion
     }
 
+    #region helper classes
     internal class ColumnInfo
     {
-        internal int BufferColumnIndex;
+        internal int OuputBufferColumnIndex;
+        internal int ErrorOuputBufferColumnIndex;
         internal string ColumnName;
         internal DataType ColumnDataType;
+        internal IDTSOutputColumn100 OutputColumn;
+        internal IDTSOutputColumn100 ErrorOutputColumn;
     }
 
     internal class CollectionNameEditor : UITypeEditor
@@ -703,4 +794,5 @@ namespace MongoDataSource
             edSvc.CloseDropDown();
         }
     }
+    #endregion
 }

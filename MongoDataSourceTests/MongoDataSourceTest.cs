@@ -220,19 +220,24 @@ public class MongoSourceTests {
     public void TestBuildOutputColumn(String elementname, BsonValue bsonValue, DataType expectedDataType, int length, int codepage) {
         MongoDataSource_Accessor target = new MongoDataSource_Accessor();
 
+        IDTSOutput100 output = Mock.Create<IDTSOutput100>(Constructor.Mocked);
+
         IDTSOutputColumnCollection100 outputCollection = Mock.Create<IDTSOutputColumnCollection100>(Constructor.Mocked);
 
         IDTSOutputColumn100 expected = Mock.Create<IDTSOutputColumn100>(Constructor.Mocked);
 
         Mock.Arrange(() => outputCollection.New()).Returns(expected);
+        Mock.Arrange(() => output.OutputColumnCollection).Returns(outputCollection);
+        Mock.Arrange(() => output.IsErrorOut).Returns(true);
 
         BsonElement el = new BsonElement(elementname, bsonValue);
         Mock.ArrangeSet(() => expected.Name = Arg.Matches<String>(x => x == elementname));
 
-        IDTSOutputColumn100 actual = target.BuildOutputColumn(outputCollection, el);
+        IDTSOutputColumn100 actual = target.BuildOutputColumn(output, el);
 
         Mock.Assert(() => expected.SetDataTypeProperties(expectedDataType, length, 0, 0, codepage));
-
+        Mock.ArrangeSet(() => expected.ErrorRowDisposition = Arg.Matches<DTSRowDisposition>(x => x == DTSRowDisposition.RD_FailComponent)).OccursOnce();
+        Mock.ArrangeSet(() => expected.TruncationRowDisposition = Arg.Matches<DTSRowDisposition>(x => x == DTSRowDisposition.RD_FailComponent)).OccursOnce();
     }
 
     /// <summary>
@@ -258,7 +263,8 @@ public class MongoSourceTests {
     ///</summary>
     [TestMethod()]
     [DeploymentItem("MongoSsisDataSource.dll")]
-    public void PopulateExternalMetadataColumnTest() {
+    public void BuildExternalMetadataColumnTest()
+    {
         MongoDataSource_Accessor target = new MongoDataSource_Accessor();
 
         IDTSOutputColumn100 outputColumn = Mock.Create<IDTSOutputColumn100>(Constructor.Mocked);
@@ -268,22 +274,28 @@ public class MongoSourceTests {
         int expectedLength = 2;
         int expectedScale = 3;
         DataType expectedDataType = DataType.DT_TEXT;
+        int expectedCodePage = 4;
 
         Mock.Arrange(() => outputColumn.Name).Returns(expectedName);
         Mock.Arrange(() => outputColumn.Precision).Returns(expectedPrecision);
         Mock.Arrange(() => outputColumn.Length).Returns(expectedLength);
         Mock.Arrange(() => outputColumn.DataType).Returns(expectedDataType);
         Mock.Arrange(() => outputColumn.Scale).Returns(expectedScale);
+        Mock.Arrange(() => outputColumn.CodePage).Returns(expectedCodePage);
 
+        IDTSExternalMetadataColumnCollection100 outputCollection = Mock.Create<IDTSExternalMetadataColumnCollection100>(Constructor.Mocked);
         IDTSExternalMetadataColumn100 expected = Mock.Create<IDTSExternalMetadataColumn100>(Constructor.Mocked);
+
+        Mock.Arrange(() => outputCollection.New()).Returns(expected);
 
         Mock.ArrangeSet(() => expected.Name = Arg.Matches<String>(x => x == expectedName)).OccursOnce();
         Mock.ArrangeSet(() => expected.Precision = Arg.Matches<int>(x => x == expectedPrecision)).OccursOnce();
         Mock.ArrangeSet(() => expected.Length = Arg.Matches<int>(x => x == expectedLength)).OccursOnce();
         Mock.ArrangeSet(() => expected.DataType = Arg.Matches<DataType>(x => x == expectedDataType)).OccursOnce();
         Mock.ArrangeSet(() => expected.Scale = Arg.Matches<int>(x => x == expectedScale)).OccursOnce();
+        Mock.ArrangeSet(() => expected.CodePage = Arg.Matches<int>(x => x == expectedCodePage)).OccursOnce();
 
-        target.PopulateExternalMetadataColumn(expected, outputColumn);
+        IDTSExternalMetadataColumn100 actual = target.BuildExternalMetadataColumn(outputCollection, outputColumn);
 
         Mock.Assert(expected);
     }
