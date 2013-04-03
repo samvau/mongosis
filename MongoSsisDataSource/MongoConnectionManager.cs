@@ -17,7 +17,7 @@ namespace MongoDataSource
         private string _databaseName = string.Empty;
         private string _userName = string.Empty;
         private string _password = string.Empty;
-
+        private bool _ssl = false;
         private string _connectionString = string.Empty;
 
         private const string CONNECTIONSTRING_TEMPLATE = "mongodb://<username>:<password>@<servername>";
@@ -48,6 +48,12 @@ namespace MongoDataSource
 
         public bool SlaveOk { get; set; }
 
+        public bool Ssl
+        {
+            get { return _ssl; }
+            set { _ssl = value; }
+        }
+
         public override string ConnectionString
         {
             get
@@ -75,9 +81,20 @@ namespace MongoDataSource
                 temporaryString = temporaryString.Replace("<password>", _password);
             }
 
-            if (SlaveOk)
+            if (SlaveOk || Ssl)
             {
-                temporaryString = temporaryString + "/?connect=direct;slaveok=true";
+                temporaryString += "/?";
+
+                if (SlaveOk)
+                {
+                    temporaryString += "connect=direct;slaveok=true";
+
+                    if(Ssl)
+                        temporaryString += ";";
+                }
+
+                if (Ssl)
+                    temporaryString += "ssl=true;sslverifycertificate=false";
             }
 
             _connectionString = temporaryString;

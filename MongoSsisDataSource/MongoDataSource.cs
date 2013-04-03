@@ -220,7 +220,8 @@ namespace MongoDataSource
             {
                 IDTSRuntimeConnection100 conn = ComponentMetaData.RuntimeConnectionCollection[0];
                 m_ConnMgr = conn.ConnectionManager;
-                database = (MongoDatabase)m_ConnMgr.AcquireConnection(null);
+                if(m_ConnMgr != null)
+                    database = (MongoDatabase)m_ConnMgr.AcquireConnection(null);
             }
         }
 
