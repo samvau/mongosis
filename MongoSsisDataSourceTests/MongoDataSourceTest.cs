@@ -4,7 +4,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 using Microsoft.SqlServer.Dts.Pipeline.Wrapper;
 using Microsoft.SqlServer.Dts.Runtime.Wrapper;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -553,21 +552,6 @@ namespace MongoSourceTests
             parsedValue = target.ParseConditionValue(value, DataType.DT_R4);
 
             Assert.AreEqual(expected, parsedValue);
-        }
-
-        /// <summary>
-        ///A test for GetOutputColumns
-        ///</summary>
-        [TestMethod()]
-        [DeploymentItem("MongoSsisDataSource.dll")]
-        public void GetOutputColumnsTest()
-        {
-            IDTSOutput100 output = null; // TODO: Initialize to an appropriate value
-            IEnumerable<IDTSOutputColumn100> expected = null; // TODO: Initialize to an appropriate value
-            IEnumerable<IDTSOutputColumn100> actual;
-            actual = MongoDataSource_Accessor.GetOutputColumns(output);
-            Assert.AreEqual(expected, actual);
-            Assert.Inconclusive("Verify the correctness of this test method.");
         }
     }
 }
