@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("MongoDataSourceTests")]
-[assembly: AssemblyDescription("MongoDB data source tests")]
+[assembly: AssemblyTitle("MongoSsisDataSourceTests")]
+[assembly: AssemblyDescription("MongoDB Ssis data source tests")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Xbridge Ltd.")]
-[assembly: AssemblyProduct("MongoDataSourceTests")]
+[assembly: AssemblyProduct("MongoSsisDataSourceTests")]
 [assembly: AssemblyCopyright("Copyright ©  2012")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]

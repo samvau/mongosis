@@ -140,13 +140,9 @@ namespace MongoDataSource
                         if (document.Contains(columnInfo.ColumnName) && document[columnInfo.ColumnName] != null)
                         {
                             if (document.GetValue(columnInfo.ColumnName).IsBsonNull)
-                            {
                                 defaultBuffer.SetNull(columnInfo.OuputBufferColumnIndex);
-                            }
                             else
-                            {
                                 defaultBuffer[columnInfo.OuputBufferColumnIndex] = GetValue(document, columnInfo);
-                            }
                         }
                         else
                         {
