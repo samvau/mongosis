@@ -79,9 +79,6 @@ namespace MongoDataSource
             var defaultOutput = ComponentMetaData.OutputCollection.New();
             defaultOutput.Name = "Output";
             defaultOutput.ExternalMetadataColumnCollection.IsUsed = true;
-            // Setting these values enables the end-user to configure the error behavior
-            defaultOutput.ErrorRowDisposition = DTSRowDisposition.RD_FailComponent;
-            defaultOutput.TruncationRowDisposition = DTSRowDisposition.RD_FailComponent;
 
             // Adds an additional output category allowing the end-user to send errors to a different output
             var errorOutput = ComponentMetaData.OutputCollection.New();
@@ -372,10 +369,7 @@ namespace MongoDataSource
 
             // Setting these values enables the end-user to configure the error behavior on a per-column basis
             if (!output.IsErrorOut)
-            {
                 outColumn.ErrorRowDisposition = DTSRowDisposition.RD_FailComponent;
-                outColumn.TruncationRowDisposition = DTSRowDisposition.RD_FailComponent;
-            }
 
             return outColumn;
         }
@@ -569,7 +563,6 @@ namespace MongoDataSource
 
         private object GetDataTypeValueFromBsonValue(BsonValue value, DataType dt)
         {
-
             if (dt == DataType.DT_I8 | dt == DataType.DT_I4)
             {
                 if (value.IsString)
@@ -602,9 +595,7 @@ namespace MongoDataSource
             else
             {
                 if (!value.IsObjectId && !value.IsString && !value.IsBsonSymbol)
-                {
                     ComponentMetaData.FireWarning(0, "MongoDataSource", "Converting " + value.BsonType + " to string, though datatype was " + dt, String.Empty, 0);
-                }
 
                 return value.ToString();
             }
