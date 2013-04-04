@@ -717,6 +717,15 @@ namespace MongoDataSource
     {
         private IWindowsFormsEditorService edSvc = null;
 
+        #region UITypeEditor members
+        /// <summary>
+        /// Edits the specified object's value using the editor style indicated by the
+        ///     System.Drawing.Design.UITypeEditor.GetEditStyle() method.
+        /// </summary>
+        /// <param name="context">An System.ComponentModel.ITypeDescriptorContext that can be used to gain additional context information.</param>
+        /// <param name="provider">An System.IServiceProvider that this editor can use to obtain services.</param>
+        /// <param name="value">The object to edit.</param>
+        /// <returns>The new value of the object. If the value of the object has not changed, this should return the same object it was passed.</returns>
         public override object EditValue(System.ComponentModel.ITypeDescriptorContext context, IServiceProvider provider, object value)
         {
             edSvc = (IWindowsFormsEditorService)provider.GetService(typeof(IWindowsFormsEditorService));
@@ -732,29 +741,40 @@ namespace MongoDataSource
                     edSvc.DropDownControl(lb);
 
                     if (lb.SelectedItem != null)
-                    {
                         return lb.SelectedItem;
-                    }
                 }
                 else
                 {
                     throw new Exception("No database connection found!");
                 }
             }
+
             return value;
         }
 
+        /// <summary>
+        /// Gets the editor style used by the System.Drawing.Design.UITypeEditor.EditValue(System.IServiceProvider,System.Object)
+        ///     method.
+        /// </summary>
+        /// <param name="context">An System.ComponentModel.ITypeDescriptorContext that can be used to gain additional context information.</param>
+        /// <returns>A System.Drawing.Design.UITypeEditorEditStyle value that indicates the style
+        ///     of editor used by the System.Drawing.Design.UITypeEditor.EditValue(System.IServiceProvider,System.Object)
+        ///     method. If the System.Drawing.Design.UITypeEditor does not support this method,
+        ///     then System.Drawing.Design.UITypeEditor.GetEditStyle() will return System.Drawing.Design.UITypeEditorEditStyle.None.</returns>
+        public override UITypeEditorEditStyle GetEditStyle(System.ComponentModel.ITypeDescriptorContext context)
+        {
+            return UITypeEditorEditStyle.DropDown;
+        }
+        #endregion
+
+        #region private methods
         private ListBox BuildListBox(MongoDatabase database)
         {
             ListBox lb = new ListBox();
 
             foreach (String name in database.GetCollectionNames())
-            {
                 if (!name.StartsWith("system"))
-                {
                     lb.Items.Add(name);
-                }
-            }
 
             lb.SelectionMode = SelectionMode.One;
             lb.SelectedValueChanged += OnListBoxSelectedValueChanged;
@@ -764,15 +784,11 @@ namespace MongoDataSource
 
         private MongoDatabase GetDatabase(System.ComponentModel.ITypeDescriptorContext context)
         {
-            MongoDatabase db = null;
-
             Microsoft.SqlServer.Dts.Runtime.ConnectionManager cm = GetMongoDBConnectionManager(context);
             if (cm != null)
-            {
-                db = (MongoDatabase)cm.AcquireConnection(null);
-            }
+                return (MongoDatabase)cm.AcquireConnection(null);
 
-            return db;
+            return null;
         }
 
         private Microsoft.SqlServer.Dts.Runtime.ConnectionManager GetMongoDBConnectionManager(System.ComponentModel.ITypeDescriptorContext context)
@@ -785,59 +801,36 @@ namespace MongoDataSource
         private Microsoft.SqlServer.Dts.Runtime.ConnectionManager GetMongoDBConnectionManager(Microsoft.SqlServer.Dts.Runtime.Package package)
         {
             if (package != null)
-            {
                 foreach (Microsoft.SqlServer.Dts.Runtime.ConnectionManager cm in package.Connections)
-                {
                     if (cm.CreationName.Equals(MongoDataSource.MONGODB_CONNECTION_MANAGER_NAME))
-                    {
                         return cm;
-                    }
-                }
-            }
 
             return null;
         }
 
         private Microsoft.SqlServer.Dts.Runtime.Package GetPackageFromContext(System.ComponentModel.ITypeDescriptorContext context)
         {
-            Microsoft.SqlServer.Dts.Runtime.Package package = null;
-
             PropertyInfo[] props = context.Instance.GetType().GetProperties();
 
             foreach (PropertyInfo propInfo in props)
             {
                 if (propInfo.Name.Equals("PipelineTask"))
                 {
-                    Microsoft.SqlServer.Dts.Runtime.EventsProvider eventsProvider = (Microsoft.SqlServer.Dts.Runtime.EventsProvider)propInfo.GetValue(context.Instance, null);
+                    Microsoft.SqlServer.Dts.Runtime.DtsContainer eventsProvider = (Microsoft.SqlServer.Dts.Runtime.EventsProvider)propInfo.GetValue(context.Instance, null);
 
-                    Microsoft.SqlServer.Dts.Runtime.DtsContainer tmpObj = eventsProvider;
-
-                    while (package == null && tmpObj.Parent != null)
+                    while (eventsProvider.Parent != null)
                     {
-
-                        if (tmpObj.Parent.GetType() == typeof(Microsoft.SqlServer.Dts.Runtime.Package))
-                        {
-                            package = (Microsoft.SqlServer.Dts.Runtime.Package)tmpObj.Parent;
-                        }
+                        if (eventsProvider.Parent.GetType() == typeof(Microsoft.SqlServer.Dts.Runtime.Package))
+                            return (Microsoft.SqlServer.Dts.Runtime.Package)eventsProvider.Parent;
                         else
-                        {
-                            tmpObj = tmpObj.Parent;
-                        }
+                            eventsProvider = eventsProvider.Parent;
                     }
 
-                    if (package == null)
-                    {
-                        throw new Exception("No package found for task!");
-                    }
+                    throw new Exception("No package found for task!");
                 }
             }
 
-            return package;
-        }
-
-        public override UITypeEditorEditStyle GetEditStyle(System.ComponentModel.ITypeDescriptorContext context)
-        {
-            return UITypeEditorEditStyle.DropDown;
+            return null;
         }
 
         private void OnListBoxSelectedValueChanged(object sender, EventArgs e)
@@ -845,6 +838,7 @@ namespace MongoDataSource
             // close the drop down as soon as something is clicked
             edSvc.CloseDropDown();
         }
+        #endregion
     }
     #endregion
 }
