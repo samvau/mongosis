@@ -12,6 +12,7 @@ namespace MongoDataSource
     public class MongoConnectionManager : ConnectionManagerBase
     {
 
+        #region private variables
         // Default values.
         private string _serverName = "localhost";
         private string _databaseName = string.Empty;
@@ -19,8 +20,11 @@ namespace MongoDataSource
         private string _password = string.Empty;
         private bool _ssl = false;
         private string _connectionString = string.Empty;
+        #endregion
 
+        #region constants
         private const string CONNECTIONSTRING_TEMPLATE = "mongodb://<username>:<password>@<servername>";
+        #endregion
 
         public string ServerName
         {
@@ -146,7 +150,7 @@ namespace MongoDataSource
 
             if (!string.IsNullOrEmpty(_connectionString))
             {
-                MongoServer mongoinstance = MongoServer.Create(_connectionString);
+                MongoServer mongoinstance = new MongoClient(_connectionString).GetServer();
 
                 if (string.IsNullOrEmpty(DatabaseName))
                 {

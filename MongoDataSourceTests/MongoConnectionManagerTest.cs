@@ -63,6 +63,52 @@ public class MongoConnectionManagerTest
     }
 
     ///<summary>
+    ///A test for UpdateConnectionString
+    ///</summary>
+    [TestMethod(), DeploymentItem("MongoSsisDataSource.dll")]
+    public void UpdateConnectionStringSslEnabledTest()
+    {
+        MongoConnectionManager_Accessor target = new MongoConnectionManager_Accessor();
+        target._serverName = "db1";
+        target._password = "pass1";
+        target._userName = "user1";
+        target._ssl = true;
+        target.UpdateConnectionString();
+        Assert.AreEqual(target._connectionString, "mongodb://user1:pass1@db1/?ssl=true;sslverifycertificate=false");
+    }
+
+    ///<summary>
+    ///A test for UpdateConnectionString
+    ///</summary>
+    [TestMethod(), DeploymentItem("MongoSsisDataSource.dll")]
+    public void UpdateConnectionStringSslEnabledSlaveOkEnabledTest()
+    {
+        MongoConnectionManager_Accessor target = new MongoConnectionManager_Accessor();
+        target._serverName = "db1";
+        target._password = "pass1";
+        target._userName = "user1";
+        target._ssl = true;
+        target.SlaveOk = true;
+        target.UpdateConnectionString();
+        Assert.AreEqual(target._connectionString, "mongodb://user1:pass1@db1/?connect=direct;slaveok=true;ssl=true;sslverifycertificate=false");
+    }
+
+    ///<summary>
+    ///A test for UpdateConnectionString
+    ///</summary>
+    [TestMethod(), DeploymentItem("MongoSsisDataSource.dll")]
+    public void UpdateConnectionStringSlaveOkEnabledTest()
+    {
+        MongoConnectionManager_Accessor target = new MongoConnectionManager_Accessor();
+        target._serverName = "db1";
+        target._password = "pass1";
+        target._userName = "user1";
+        target.SlaveOk = true;
+        target.UpdateConnectionString();
+        Assert.AreEqual(target._connectionString, "mongodb://user1:pass1@db1/?connect=direct;slaveok=true");
+    }
+
+    ///<summary>
     ///A test for Validate
     ///</summary>
     [TestMethod()]
@@ -236,6 +282,31 @@ public class MongoConnectionManagerTest
         string actual = null;
         target.UserName = expected;
         actual = target.UserName;
+        Assert.AreEqual(expected, actual);
+    }
+
+    ///<summary>
+    ///A test for Ssl
+    ///</summary>
+    [TestMethod()]
+    public void SslTest()
+    {
+        MongoConnectionManager target = new MongoConnectionManager();
+        bool expected = true;
+        target.Ssl = expected;
+        bool actual = target.Ssl;
+        Assert.AreEqual(expected, actual);
+    }
+
+    ///<summary>
+    ///A test for Ssl
+    ///</summary>
+    [TestMethod()]
+    public void SslDefaultFalseTest()
+    {
+        MongoConnectionManager target = new MongoConnectionManager();
+        bool expected = false;
+        bool actual = target.Ssl;
         Assert.AreEqual(expected, actual);
     }
 }
