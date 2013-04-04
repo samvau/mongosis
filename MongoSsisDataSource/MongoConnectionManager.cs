@@ -3,6 +3,7 @@
  * See the file license.txt for copying permission.
  */
 
+using System;
 using Microsoft.SqlServer.Dts.Runtime;
 using MongoDB.Driver;
 
@@ -26,38 +27,63 @@ namespace MongoDataSource
         private const string CONNECTIONSTRING_TEMPLATE = "mongodb://<username>:<password>@<servername>";
         #endregion
 
+        #region public properties
+        /// <summary>
+        /// The host name or IP address of the database server
+        /// </summary>
         public string ServerName
         {
             get { return _serverName; }
             set { _serverName = value; }
         }
 
+        /// <summary>
+        /// The name of the mongo db database
+        /// </summary>
         public string DatabaseName
         {
             get { return _databaseName; }
             set { _databaseName = value; }
         }
 
+        /// <summary>
+        /// The database user
+        /// </summary>
         public string UserName
         {
             get { return _userName; }
             set { _userName = value; }
         }
 
+        /// <summary>
+        /// The password for the database user
+        /// </summary>
         public string Password
         {
             get { return _password; }
             set { _password = value; }
         }
 
+        /// <summary>
+        /// If true, this will allow the component to connect to a database node other than the primary node
+        /// </summary>
         public bool SlaveOk { get; set; }
 
+        /// <summary>
+        /// If true, this will force the connection to use SSL
+        /// The database must be running in SSL mode in order for this to work
+        /// </summary>
         public bool Ssl
         {
             get { return _ssl; }
             set { _ssl = value; }
         }
+        #endregion
 
+        #region ConnectionManagerBase members
+        /// <summary>
+        /// Gets or sets the connection string for the connection.
+        /// </summary>
         public override string ConnectionString
         {
             get
@@ -67,23 +93,81 @@ namespace MongoDataSource
             }
             set { _connectionString = value; }
         }
+        /// <summary>
+        /// Validates the connection and returns an enumeration that indicates success or failure.
+        /// </summary>
+        /// <param name="infoEvents"> An object that implements the Microsoft.SqlServer.Dts.Runtime.IDTSInfoEvents events interface to raise errors, warning, or informational events.</param>
+        /// <returns>A Microsoft.SqlServer.Dts.Runtime.DTSExecResult enumeration.</returns>
+        public override Microsoft.SqlServer.Dts.Runtime.DTSExecResult Validate(Microsoft.SqlServer.Dts.Runtime.IDTSInfoEvents infoEvents)
+        {
+            if (string.IsNullOrWhiteSpace(_serverName))
+                return HandleValidationError(infoEvents, "No server name specified");
+            else if (string.IsNullOrWhiteSpace(_databaseName))
+                return HandleValidationError(infoEvents, "No database name specified");
+            else if (string.IsNullOrWhiteSpace(_password))
+                return HandleValidationError(infoEvents, "No password specified");
+            else if (string.IsNullOrWhiteSpace(_userName))
+                return HandleValidationError(infoEvents, "No username specified");
+            else
+                return DTSExecResult.Success;
+        }
 
+        /// <summary>
+        /// Creates an instance of the connection type.
+        /// </summary>
+        /// <param name="txn">The handle to a transaction object. (optional)</param>
+        /// <returns></returns>
+        public override object AcquireConnection(object txn)
+        {
+            MongoDatabase database = null;
+            if (string.IsNullOrWhiteSpace(_connectionString))
+                UpdateConnectionString();
+
+            if (!string.IsNullOrWhiteSpace(_connectionString))
+            {
+                MongoServer mongoinstance = new MongoClient(_connectionString).GetServer();
+
+                if (string.IsNullOrWhiteSpace(DatabaseName))
+                    throw new Exception("No database specified");
+
+                database = mongoinstance.GetDatabase(DatabaseName);
+            }
+            else
+            {
+                throw new Exception("Can not connect to MongoDB with empty connection string");
+            }
+
+            return database;
+        }
+
+        /// <summary>
+        /// Frees the connection established during Microsoft.SqlServer.Dts.Runtime.ConnectionManagerBase.AcquireConnection(System.Object).
+        ///     Called at design time and run time.
+        /// </summary>
+        /// <param name="connection">The connection to release.</param>
+        public override void ReleaseConnection(object connection)
+        {
+            if (connection != null)
+            {
+                MongoDatabase database = (MongoDatabase)connection;
+                database.Server.Disconnect();
+            }
+        }
+        #endregion
+
+        #region private methods
         private void UpdateConnectionString()
         {
             string temporaryString = CONNECTIONSTRING_TEMPLATE;
 
-            if (!string.IsNullOrEmpty(_serverName))
-            {
+            if (!string.IsNullOrWhiteSpace(_serverName))
                 temporaryString = temporaryString.Replace("<servername>", _serverName);
-            }
-            if (!string.IsNullOrEmpty(_userName))
-            {
+
+            if (!string.IsNullOrWhiteSpace(_userName))
                 temporaryString = temporaryString.Replace("<username>", _userName);
-            }
-            if (!string.IsNullOrEmpty(_password))
-            {
+
+            if (!string.IsNullOrWhiteSpace(_password))
                 temporaryString = temporaryString.Replace("<password>", _password);
-            }
 
             if (SlaveOk || Ssl)
             {
@@ -102,79 +186,15 @@ namespace MongoDataSource
             }
 
             _connectionString = temporaryString;
-
-        }
-
-        public override Microsoft.SqlServer.Dts.Runtime.DTSExecResult Validate(Microsoft.SqlServer.Dts.Runtime.IDTSInfoEvents infoEvents)
-        {
-
-            if (string.IsNullOrEmpty(_serverName))
-            {
-                return HandleValidationError(infoEvents, "No server name specified");
-            }
-            else if (string.IsNullOrEmpty(_databaseName))
-            {
-                return HandleValidationError(infoEvents, "No database name specified");
-            }
-            else if (string.IsNullOrEmpty(_password))
-            {
-                return HandleValidationError(infoEvents, "No password specified");
-            }
-            else if (string.IsNullOrEmpty(_userName))
-            {
-                return HandleValidationError(infoEvents, "No username specified");
-            }
-            else
-            {
-                return DTSExecResult.Success;
-            }
-
         }
 
         private Microsoft.SqlServer.Dts.Runtime.DTSExecResult HandleValidationError(Microsoft.SqlServer.Dts.Runtime.IDTSInfoEvents infoEvents, string message)
         {
             if (infoEvents != null)
-            {
                 infoEvents.FireError(0, "MongoConnectionManager", message, string.Empty, 0);
-            }
+
             return DTSExecResult.Failure;
         }
-
-        public override object AcquireConnection(object txn)
-        {
-            MongoDatabase database = null;
-            if (string.IsNullOrEmpty(_connectionString))
-            {
-                UpdateConnectionString();
-            }
-
-            if (!string.IsNullOrEmpty(_connectionString))
-            {
-                MongoServer mongoinstance = new MongoClient(_connectionString).GetServer();
-
-                if (string.IsNullOrEmpty(DatabaseName))
-                {
-                    throw new System.Exception("No database specified");
-                }
-
-                database = mongoinstance.GetDatabase(DatabaseName);
-            }
-            else
-            {
-                throw new System.Exception("Can not connect to MongoDB with empty connection string");
-            }
-
-            return database;
-        }
-
-        public override void ReleaseConnection(object connection)
-        {
-            if (connection != null)
-            {
-                MongoDatabase database = (MongoDatabase)connection;
-
-                database.Server.Disconnect();
-            }
-        }
+        #endregion
     }
 }
