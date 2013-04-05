@@ -24,7 +24,9 @@ namespace MongoDataSource
     [DtsPipelineComponent(DisplayName = "MongoDB Source",
         Description = "Mongosis - Loads data from a MongoDB data source",
         ComponentType = ComponentType.SourceAdapter,
-        IconResource = "MongoDataSource.Resources.mongosis.ico")]
+        IconResource = "MongoDataSource.Resources.mongosis.ico",
+        CurrentVersion = 170
+        )]
     public class MongoDataSource : PipelineComponent
     {
         #region constants
@@ -60,6 +62,47 @@ namespace MongoDataSource
         #endregion
 
         #region PipelineComponent members
+        /// <summary>
+        /// Upgrades the component metadata to the version of the component installed on the local computer.
+        /// </summary>
+        /// <param name="pipelineVersion">The current version of the Integration Services data flow engine.</param>
+        public override void PerformUpgrade(int pipelineVersion)
+        {
+            // Obtain the current component version from the attribute.
+            DtsPipelineComponentAttribute componentAttribute =
+              (DtsPipelineComponentAttribute)Attribute.GetCustomAttribute(this.GetType(), typeof(DtsPipelineComponentAttribute), false);
+            int currentVersion = componentAttribute.CurrentVersion;
+
+            // If the component version saved in the package is less than
+            //  the current version, Version 2, perform the upgrade.
+            if (ComponentMetaData.Version < currentVersion) {
+
+                // Expose the external metadata collection
+                var defaultOutput = GetDefaultOutput();
+                if(defaultOutput != null)
+                    defaultOutput.ExternalMetadataColumnCollection.IsUsed = true;
+
+                // Adds an additional output category allowing the end-user to send errors to a different output
+                var errorOutput = GetErrorOutput();
+                if (errorOutput == null)
+                {
+                    errorOutput = ComponentMetaData.OutputCollection.New();
+                    errorOutput.Name = "ErrorOutput";
+                    errorOutput.IsErrorOut = true;
+                    // Copy the existing output columns to the error output
+                    foreach (IDTSOutputColumn100 outputColumn in GetDefaultOutputColumns())
+                    {
+                        var errorOutputColumn = errorOutput.OutputColumnCollection.New();
+                        errorOutputColumn.Name = outputColumn.Name;
+                        errorOutputColumn.SetDataTypeProperties(outputColumn.DataType, outputColumn.Length, outputColumn.Precision, outputColumn.Scale, outputColumn.CodePage);
+                    }
+                }
+            }
+
+            // Update the saved component version metadata to the current version.
+            ComponentMetaData.Version = currentVersion;
+        }
+
         /// <summary>
         /// Called when a component is first added to the data flow task, to initialize
         ///     the Microsoft.SqlServer.Dts.Pipeline.PipelineComponent.ComponentMetaData
@@ -124,7 +167,6 @@ namespace MongoDataSource
 
             var cursor = GetCollectionCursor(ComponentMetaData.CustomPropertyCollection[COLLECTION_NAME_PROP_NAME].Value);
             var defaultOutputColumns = GetDefaultOutputColumns().ToArray();
-            var errorOutputColumns = GetErrorOutputColumns().ToArray();
             foreach (BsonDocument document in cursor)
             {
                 ColumnInfo failingColumnInfo = null;
@@ -137,9 +179,30 @@ namespace MongoDataSource
                         if (document.Contains(columnInfo.ColumnName) && document[columnInfo.ColumnName] != null)
                         {
                             if (document.GetValue(columnInfo.ColumnName).IsBsonNull)
+                            {
                                 defaultBuffer.SetNull(columnInfo.OuputBufferColumnIndex);
+                            }
                             else
-                                defaultBuffer[columnInfo.OuputBufferColumnIndex] = GetValue(document, columnInfo);
+                            {
+                                var value = GetValue(document, columnInfo);
+                                try
+                                {
+                                    defaultBuffer[columnInfo.OuputBufferColumnIndex] = value;
+                                }
+                                catch (DoesNotFitBufferException ex)
+                                {
+                                    if (failingColumnInfo.OutputColumn.TruncationRowDisposition == DTSRowDisposition.RD_IgnoreFailure)
+                                        if (value is string)
+                                            defaultBuffer[columnInfo.OuputBufferColumnIndex] = value.ToString().Substring(0, columnInfo.OutputColumn.Length);
+                                        else
+                                            ComponentMetaData.FireWarning(0,
+                                                "MongoDataSource",
+                                                string.Format("Truncation of column {0} failed, as truncation of type {1} currently unsupported.", columnInfo.OutputColumn.Name, value.GetType().FullName),
+                                                String.Empty, 0);
+                                    else
+                                        throw ex;
+                                }
+                            }
                         }
                         else
                         {
@@ -149,33 +212,13 @@ namespace MongoDataSource
                 }
                 catch (Exception ex)
                 {
-                    switch (failingColumnInfo.OutputColumn.ErrorRowDisposition)
-                    {
-                        case DTSRowDisposition.RD_RedirectRow:
-                            if (errorBuffer == null) throw new InvalidOperationException("There must be an error output defined if redirection was specified");
+                    DTSRowDisposition disposition = DTSRowDisposition.RD_NotUsed;
+                    if (ex is DoesNotFitBufferException)
+                        disposition = failingColumnInfo.OutputColumn.TruncationRowDisposition;
+                    else
+                        disposition = failingColumnInfo.OutputColumn.ErrorRowDisposition;
 
-                            // Add a row to the error buffer.
-                            errorBuffer.AddRow();
-
-                            // Get the values from the default buffer
-                            // and copy them to the error buffer.
-                            foreach (IDTSOutputColumn100 column in errorOutputColumns)
-                            {
-                                ColumnInfo copiedColumnInfo = GetColumnInfo(column.Name);
-                                if (copiedColumnInfo != null)
-                                    errorBuffer[copiedColumnInfo.ErrorOuputBufferColumnIndex] = defaultBuffer[copiedColumnInfo.OuputBufferColumnIndex];
-                            }
-
-                            // Set the error information.
-                            int errorCode = System.Runtime.InteropServices.Marshal.GetHRForException(ex);
-                            errorBuffer.SetErrorInfo(errorOutputID, errorCode, failingColumnInfo.OutputColumn.LineageID);
-
-                            // Remove the row that was added to the default buffer.
-                            defaultBuffer.RemoveRow();
-                            break;
-                        case DTSRowDisposition.RD_FailComponent:
-                            throw new Exception(String.Format("There was an issue with column: {0}", failingColumnInfo.OutputColumn.Name), ex);
-                    }
+                    HandleProcessingError(disposition, defaultBuffer, errorBuffer, failingColumnInfo, ex);
                 }
             }
 
@@ -369,7 +412,10 @@ namespace MongoDataSource
 
             // Setting these values enables the end-user to configure the error behavior on a per-column basis
             if (!output.IsErrorOut)
+            {
                 outColumn.ErrorRowDisposition = DTSRowDisposition.RD_FailComponent;
+                outColumn.TruncationRowDisposition = DTSRowDisposition.RD_FailComponent;
+            }
 
             return outColumn;
         }
@@ -636,7 +682,7 @@ namespace MongoDataSource
 
         /// <summary>
         /// Locates the default output.
-        /// Raises an exception if there is no default output.
+        /// Returns null if there is no default output.
         /// </summary>
         /// <returns></returns>
         private IDTSOutput100 GetDefaultOutput()
@@ -645,12 +691,12 @@ namespace MongoDataSource
                 if (!output.IsErrorOut)
                     return output;
 
-            throw new InvalidOperationException("There is no default output defined");
+            return null;
         }
 
         /// <summary>
         /// Locates the error output.
-        /// Raises an exception if there is no error output.
+        /// Returns null if there is no error output.
         /// </summary>
         /// <returns></returns>
         private IDTSOutput100 GetErrorOutput()
@@ -659,7 +705,7 @@ namespace MongoDataSource
                 if (output.IsErrorOut)
                     return output;
 
-            throw new InvalidOperationException("There is no error output defined");
+            return null;
         }
 
         /// <summary>
@@ -687,8 +733,51 @@ namespace MongoDataSource
         /// <returns></returns>
         private static IEnumerable<IDTSOutputColumn100> GetOutputColumns(IDTSOutput100 output)
         {
+            if (output == null)
+                yield break;
+
             foreach (IDTSOutputColumn100 column in output.OutputColumnCollection)
                 yield return column;
+        }
+
+        /// <summary>
+        /// Will perform the user-specified behaviour when a processing error occurs
+        /// </summary>
+        /// <param name="disposition">How the error should be handled</param>
+        /// <param name="defaultBuffer">The default output buffer</param>
+        /// <param name="errorBuffer">The error output buffer</param>
+        /// <param name="failingColumnInfo">The information for the problematic column</param>
+        /// <param name="ex">The exception caught from processing (optional)</param>
+        private void HandleProcessingError(DTSRowDisposition disposition, PipelineBuffer defaultBuffer, PipelineBuffer errorBuffer, ColumnInfo failingColumnInfo, Exception ex)
+        {
+            switch (disposition)
+            {
+                case DTSRowDisposition.RD_RedirectRow:
+                    if (errorBuffer == null) throw new InvalidOperationException("There must be an error output defined if redirection was specified");
+
+                    // Add a row to the error buffer.
+                    errorBuffer.AddRow();
+
+                    // Get the values from the default buffer
+                    // and copy them to the error buffer.
+                    var errorOutputColumns = GetErrorOutputColumns().ToArray();
+                    foreach (IDTSOutputColumn100 column in errorOutputColumns)
+                    {
+                        ColumnInfo copiedColumnInfo = GetColumnInfo(column.Name);
+                        if (copiedColumnInfo != null)
+                            errorBuffer[copiedColumnInfo.ErrorOuputBufferColumnIndex] = defaultBuffer[copiedColumnInfo.OuputBufferColumnIndex];
+                    }
+
+                    // Set the error information.
+                    int errorCode = (ex == null ? 0 : System.Runtime.InteropServices.Marshal.GetHRForException(ex));
+                    errorBuffer.SetErrorInfo(errorOutputID, errorCode, failingColumnInfo.OutputColumn.LineageID);
+
+                    // Remove the row that was added to the default buffer.
+                    defaultBuffer.RemoveRow();
+                    break;
+                case DTSRowDisposition.RD_FailComponent:
+                    throw new Exception(String.Format("There was an issue with column: {0}", failingColumnInfo.OutputColumn.Name), ex);
+            }
         }
         #endregion
     }

@@ -4,6 +4,8 @@
  */
 
 using System;
+using System.Linq;
+using System.Xml.Linq;
 using Microsoft.SqlServer.Dts.Runtime;
 using MongoDB.Driver;
 
@@ -81,6 +83,43 @@ namespace MongoDataSource
         #endregion
 
         #region ConnectionManagerBase members
+        /// <summary>
+        /// Returns the version of this connection manager.
+        /// </summary>
+        public override int Version { get { return 170; } }
+
+        /// <summary>
+        /// Gets or sets a Boolean that determines whether a connection manager supports
+        ///     upgrading the connection XML to a newer version.
+        /// </summary>
+        /// <param name="CreationName">The name of the connection to upgrade.</param>
+        /// <returns>true if support exists for upgrades; otherwise, false. The default value is false</returns>
+        public override bool CanUpdate(string CreationName) { return true; }
+
+        /// <summary>
+        /// Updates the XML persisted by a previous version of the connection manager.
+        /// </summary>
+        /// <param name="ObjectXml">The XML used to update the connection manager XML.</param>
+        public override void Update(ref string ObjectXml)
+        {
+            var xDocument = XDocument.Parse(ObjectXml);
+            // Check if the Ssl property already exists, if not, we must create it
+            var ssl = xDocument.Root.Descendants("Ssl").SingleOrDefault();
+            if (ssl == null)
+            {
+                // We expect the SlaveOk property to exist, so we can model the Ssl property after it
+                var slaveOk = xDocument.Root.Descendants("SlaveOk").SingleOrDefault();
+                if (slaveOk != null)
+                {
+                    ssl = XElement.Parse(slaveOk.ToString());
+                    ssl.Name = "Ssl";
+                    ssl.SetAttributeValue("Value", 0); // Default Ssl to false
+                    slaveOk.AddAfterSelf(ssl);
+                    ObjectXml = xDocument.ToString();
+                }
+            }
+        }
+
         /// <summary>
         /// Gets or sets the connection string for the connection.
         /// </summary>

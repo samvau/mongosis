@@ -262,6 +262,7 @@ namespace MongoSourceTests
 
             Mock.Assert(() => expected.SetDataTypeProperties(expectedDataType, length, 0, 0, codepage));
             Mock.ArrangeSet(() => expected.ErrorRowDisposition = Arg.Matches<DTSRowDisposition>(x => x == DTSRowDisposition.RD_FailComponent)).OccursOnce();
+            Mock.ArrangeSet(() => expected.TruncationRowDisposition = Arg.Matches<DTSRowDisposition>(x => x == DTSRowDisposition.RD_FailComponent)).OccursOnce();
         }
 
         /// <summary>
