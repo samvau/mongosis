@@ -3,6 +3,7 @@
  * See the file license.txt for copying permission.
  */
 
+using System.Xml.Linq;
 using Microsoft.SqlServer.Dts.Runtime;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using MongoDataSource;
@@ -309,6 +310,19 @@ namespace MongoSourceTests
             bool expected = false;
             bool actual = target.Ssl;
             Assert.AreEqual(expected, actual);
+        }
+
+        /// <summary>
+        ///A test for Update
+        ///</summary>
+        [TestMethod()]
+        public void UpdateTest()
+        {
+            MongoConnectionManager target = new MongoConnectionManager();
+            string ObjectXml = "<ConnectionManager><ObjectData><InnerObject><SlaveOk Type=\"11\" Value=\"-1\" /></InnerObject></ObjectData></ConnectionManager>";
+            string ObjectXmlExpected = "<ConnectionManager><ObjectData><InnerObject><SlaveOk Type=\"11\" Value=\"-1\" /><Ssl Type=\"11\" Value=\"0\" /></InnerObject></ObjectData></ConnectionManager>";
+            target.Update(ref ObjectXml);
+            Assert.AreEqual(XDocument.Parse(ObjectXmlExpected).ToString(), ObjectXml);
         }
     }
 }
