@@ -77,6 +77,9 @@ namespace MongoDataSource
             //  the current version, Version 2, perform the upgrade.
             if (ComponentMetaData.Version < currentVersion) {
 
+                // Specify that the component has an error output.
+                ComponentMetaData.UsesDispositions = true;
+
                 // Expose the external metadata collection
                 var defaultOutput = GetDefaultOutput();
                 if(defaultOutput != null)
@@ -92,6 +95,8 @@ namespace MongoDataSource
                     // Copy the existing output columns to the error output
                     foreach (IDTSOutputColumn100 outputColumn in GetDefaultOutputColumns())
                     {
+                        outputColumn.ErrorRowDisposition = DTSRowDisposition.RD_FailComponent;
+                        outputColumn.TruncationRowDisposition = DTSRowDisposition.RD_FailComponent;
                         var errorOutputColumn = errorOutput.OutputColumnCollection.New();
                         errorOutputColumn.Name = outputColumn.Name;
                         errorOutputColumn.SetDataTypeProperties(outputColumn.DataType, outputColumn.Length, outputColumn.Precision, outputColumn.Scale, outputColumn.CodePage);

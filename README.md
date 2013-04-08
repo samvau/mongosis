@@ -46,6 +46,22 @@ Mongosis has an installer which makes deployment very easy, however if you wish 
 11. Click on the MongoDB Data Source and create a connection to the destination.
 12. Select 'Start Debugging' (key F5) to begin the data flow process.
 
+## Upgrading existing SSIS packages to the latest version of Mongosis
+
+1. Uninstall any existing versions of Mongosis
+1. Install the latest version of Mongosis
+1. Ensure you have the appropriate version of the C# MongoDB drivers installed (1.7.0 is the current compatible version)
+1. In a text editor, open up the Package.dtsx file for the SSIS package:
+  1. Find the connection manager entry with the name: "MongoDBConnectionManager" and add the following object data after the "SlaveOk" entry:
+```
+<Ssl
+  Type="11"
+  Value="0" />
+```
+  2. Find any property entries that specify a version for "MongoSsisDataSource" and set that to match the version number of Mongosis to which you are upgrading (i.e. 1.7.0.0)
+  3. Save the changes
+1. Restart Visual Studio in order to complete the upgrade
+
 ## Notes:
 
 * Ensure that 'Run64BitRuntime' option in SSIS project Configuration/Debugging properties is set to 'False'.
