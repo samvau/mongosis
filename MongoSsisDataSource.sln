@@ -1,8 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MongoSourceTests", "MongoDataSourceTests\MongoSourceTests.csproj", "{819DDAED-CD51-4893-8698-FDA949985116}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{171D740A-28B1-4DC8-8DE1-679BC05681C3}"
 	ProjectSection(SolutionItems) = preProject
 		Local.testsettings = Local.testsettings
@@ -14,6 +12,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MongoSsisDataSource", "Mong
 EndProject
 Project("{930C7802-8A8C-48F9-8165-68863BCCD9DD}") = "Installer", "Installer\Installer.wixproj", "{80B13970-5D0C-4B6F-8294-5D9D06BB434A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MongoSsisSourceTests", "MongoSsisDataSourceTests\MongoSsisSourceTests.csproj", "{819DDAED-CD51-4893-8698-FDA949985116}"
+EndProject
 Global
 	GlobalSection(TestCaseManagementSettings) = postSolution
 		CategoryFile = MongoSsisDataSource.vsmdi
@@ -23,9 +23,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{819DDAED-CD51-4893-8698-FDA949985116}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{819DDAED-CD51-4893-8698-FDA949985116}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{819DDAED-CD51-4893-8698-FDA949985116}.Release|Any CPU.ActiveCfg = Debug|Any CPU
 		{EA2F5DA3-DF0C-49E3-958B-508A13D88729}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{EA2F5DA3-DF0C-49E3-958B-508A13D88729}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EA2F5DA3-DF0C-49E3-958B-508A13D88729}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -33,12 +30,15 @@ Global
 		{80B13970-5D0C-4B6F-8294-5D9D06BB434A}.Debug|Any CPU.ActiveCfg = Debug|x86
 		{80B13970-5D0C-4B6F-8294-5D9D06BB434A}.Release|Any CPU.ActiveCfg = Release|x86
 		{80B13970-5D0C-4B6F-8294-5D9D06BB434A}.Release|Any CPU.Build.0 = Release|x86
+		{819DDAED-CD51-4893-8698-FDA949985116}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{819DDAED-CD51-4893-8698-FDA949985116}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{819DDAED-CD51-4893-8698-FDA949985116}.Release|Any CPU.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{819DDAED-CD51-4893-8698-FDA949985116} = {171D740A-28B1-4DC8-8DE1-679BC05681C3}
 		{EA2F5DA3-DF0C-49E3-958B-508A13D88729} = {171D740A-28B1-4DC8-8DE1-679BC05681C3}
+		{819DDAED-CD51-4893-8698-FDA949985116} = {171D740A-28B1-4DC8-8DE1-679BC05681C3}
 	EndGlobalSection
 EndGlobal

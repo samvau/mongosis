@@ -12,7 +12,7 @@ https://github.com/mongodb/mongo-csharp-driver/downloads
 
 ### Notes:
 
-* The latest version of Mongosis (1.6.1) requires the 1.5.0 version of the C# MongoDB drivers.
+* The latest version of Mongosis (1.7.0) requires the 1.7.0 version of the C# MongoDB drivers.
 * From version 1.5.0 of the C# MongoDB drivers and on, the installer does not load the drivers into the Global Assembly Cache (GAC).
     * Run gacutil.exe with '/iF' option to load the C# MongoDB driver DLLs in to the GAC.
     * gacutil.exe can be found here: C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\bin\NETFX 4.0 Tools\gacutil.exe
@@ -45,6 +45,22 @@ Mongosis has an installer which makes deployment very easy, however if you wish 
 10. Drag your data destination to the Data Flow area
 11. Click on the MongoDB Data Source and create a connection to the destination.
 12. Select 'Start Debugging' (key F5) to begin the data flow process.
+
+## Upgrading existing SSIS packages to the latest version of Mongosis
+
+1. Uninstall any existing versions of Mongosis
+1. Install the latest version of Mongosis
+1. Ensure you have the appropriate version of the C# MongoDB drivers installed (1.7.0 is the current compatible version)
+1. In a text editor, open up the Package.dtsx file for the SSIS package:
+  1. Find the connection manager entry with the name: "MongoDBConnectionManager" and add the following object data after the "SlaveOk" entry:
+```
+<Ssl
+  Type="11"
+  Value="0" />
+```
+  2. Find any property entries that specify a version for "MongoSsisDataSource" and set that to match the version number of Mongosis to which you are upgrading (i.e. 1.7.0.0)
+  3. Save the changes
+1. Restart Visual Studio in order to complete the upgrade
 
 ## Notes:
 
