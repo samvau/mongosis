@@ -345,6 +345,8 @@ namespace MongoDataSource
             // Remove the existing columns from the output in order to prevent us from adding duplicate columns
             foreach (IDTSOutput100 output in ComponentMetaData.OutputCollection)
             {
+                // We can't simply call RemoveAll on the error output column collection, as there
+                //  are two columns (ErrorColumn and ErrorCode) that we cannot remove as it throws an exception if we try
                 if (output.IsErrorOut)
                 {
                     List<IDTSOutputColumn100> columns = new List<IDTSOutputColumn100>();
@@ -668,11 +670,14 @@ namespace MongoDataSource
         /// <returns></returns>
         private IEnumerable<ColumnInfo> GetColumnInformata()
         {
+            // This is a Linq (for set operations) query that performs a left outer join of default output columns to error output columns.
+            // The purpose of this join is to collect the column metadata for both the default and error outputs for each column.
             var query = from outputColumn in GetDefaultOutputColumns()
                         join errorOutputColumn in GetErrorOutputColumns() on outputColumn.Name equals errorOutputColumn.Name into joinO
                         from subErrorOutputColum in joinO.DefaultIfEmpty()
                         select new { OutputColumn = outputColumn, ErrorOutputColumn = subErrorOutputColum };
 
+            // Using the result of the query, builds a collection of ColumnInfo
             return query.Select(o => new ColumnInfo()
             {
                 ColumnDataType = o.OutputColumn.DataType,
