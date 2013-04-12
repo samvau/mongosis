@@ -100,7 +100,7 @@
 							<li><p>Microsoft <a href="http://www.microsoft.com/visualstudio/en-us/products/2010-editions">Visual Studio</a> 2010 <i>(SQL Server Data Tools)</i></p></li>
 							<li><p>The <a href="https://github.com/mongodb/mongo-csharp-driver/downloads">MongoDB C# Driver</a></p>
 								<ul>
-									<li>The latest version of Mongosis requires version 1.5.0 of the MongoDB C# driver</li>
+									<li>The latest version of Mongosis requires version 1.7.0 of the MongoDB C# driver</li>
 									<li>Run gacutil.exe with '/iF' option to load the MongoDB C# driver DLLs in to the Global Assembly Cache</li>
 									<li>gacutil.exe can be found here: C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\bin\NETFX 4.0 Tools\gacutil.exe</li>
 								</ul>
@@ -150,7 +150,7 @@
 	      						</div>
 							</li>
 							<li>
-								<p>In the properties tab, enter the <code>DatabaseName</code>, <code>ServerName</code>, <code>UserName</code> and <code>Password</code>for your Mongo database. Note that the <code>SlaveOk</code> property can be set to <strong>true</strong> in order to connect to a slave node within a replica set.</p>
+								<p>In the properties tab, enter the <code>DatabaseName</code>, <code>ServerName</code>, <code>UserName</code> and <code>Password</code>for your Mongo database. Note that the <code>SlaveOk</code> property can be set to <strong>true</strong> in order to connect to a slave node within a replica set. Note that the <code>Ssl</code> property can be set to <strong>true</strong> in order to connect to a database running with SSL encryption.</p>
 								<div class="tutorial-thumb">
 									<a class="thumbnail" href="img/tutorial/6.png" rel="lightbox[tutorial]" title="Enter credentials">
 		        						<img src="img/tutorial/6.png" alt="Enter credentials">
