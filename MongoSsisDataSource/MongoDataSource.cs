@@ -365,25 +365,32 @@ namespace MongoDataSource
                 }
             }
 
-            BsonDocument document = collection.FindOne();
+            // Get a sizeable sample of documents to increase the likelihood that all possible columns are present
+            var documents = collection
+                .FindAll()
+                .SetLimit(1000);
+
+            // Collect the distinct column names
+            var elements = documents.SelectMany(document => document.Select(element => element.Name)).Distinct();
 
             // Walk the columns in the schema,
             // and for each data column create an output column and an external metadata column.
-            foreach (BsonElement bsonElement in document)
+            foreach (var element in elements)
             {
                 // Try to find a document that has a [non null] value for the particular column.
-                BsonDocument documentWithNonNullElementValue = collection.FindOne(Query.NE(bsonElement.Name, BsonNull.Value));
+                BsonDocument documentWithNonNullElementValue = collection.FindOne(Query.NE(element, BsonNull.Value));
+
+                if (documentWithNonNullElementValue == null)
+                    continue;
 
                 // If a document is found with a value for the element, use the element with the non-null value
                 // instead of the original, which may or may not have a value. This will help to ensure that
                 // a column will not be treated as a string just because some of its values were null.
-                BsonElement bsonElementWithValue = null;
-                if (documentWithNonNullElementValue != null)
-                    bsonElementWithValue = documentWithNonNullElementValue.GetElement(bsonElement.Name);
+                BsonElement bsonElement = documentWithNonNullElementValue.GetElement(element);
 
                 foreach (IDTSOutput100 output in ComponentMetaData.OutputCollection)
                 {
-                    IDTSOutputColumn100 outColumn = BuildOutputColumn(output, bsonElementWithValue ?? bsonElement);
+                    IDTSOutputColumn100 outColumn = BuildOutputColumn(output, bsonElement);
                     IDTSExternalMetadataColumn100 externalColumn = BuildExternalMetadataColumn(output.ExternalMetadataColumnCollection, outColumn);
 
                     // Map the external column to the output column.
