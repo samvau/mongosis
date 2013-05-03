@@ -365,7 +365,8 @@ namespace MongoDataSource
                 }
             }
 
-            // Get a sizeable sample of documents to increase the likelihood that all possible columns are present
+            // Get a sizeable sample of documents to increase the likelihood that all possible columns are present.
+            // The limit of 1000 is arbitrary. TODO: Make this configurable
             var documents = collection
                 .FindAll()
                 .SetLimit(1000);
@@ -373,19 +374,17 @@ namespace MongoDataSource
             // Collect the distinct column names
             var elements = documents.SelectMany(document => document.Select(element => element.Name)).Distinct();
 
-            // Walk the columns in the schema,
-            // and for each data column create an output column and an external metadata column.
+            // For each data column, create an output column and an external metadata column.
             foreach (var element in elements)
             {
                 // Try to find a document that has a [non null] value for the particular column.
                 BsonDocument documentWithNonNullElementValue = collection.FindOne(Query.NE(element, BsonNull.Value));
 
+                // If the column is not populated in any document of the collection, don't output the column.
+                // Without a value, we can't determine the data type of the column.
                 if (documentWithNonNullElementValue == null)
                     continue;
 
-                // If a document is found with a value for the element, use the element with the non-null value
-                // instead of the original, which may or may not have a value. This will help to ensure that
-                // a column will not be treated as a string just because some of its values were null.
                 BsonElement bsonElement = documentWithNonNullElementValue.GetElement(element);
 
                 foreach (IDTSOutput100 output in ComponentMetaData.OutputCollection)
