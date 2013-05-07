@@ -658,7 +658,7 @@ namespace MongoDataSource
             }
             else
             {
-                if (!value.IsObjectId && !value.IsString && !value.IsBsonSymbol)
+                if (dt != DataType.DT_STR && (!value.IsObjectId && !value.IsString && !value.IsBsonSymbol))
                     ComponentMetaData.FireWarning(0, "MongoDataSource", "Converting " + value.BsonType + " to string, though datatype was " + dt, String.Empty, 0);
 
                 return value.ToString();
