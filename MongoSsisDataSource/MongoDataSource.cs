@@ -35,6 +35,8 @@ namespace MongoDataSource
         private const string CONDITION_FROM_PROP_NAME = "ConditionFromValue";
         private const string CONDITION_TO_PROP_NAME = "ConditionToValue";
         private const string CONDITION_DOC_PROP_NAME = "ConditionQuery";
+        private const string SAMPLE_SIZE_PROP_NAME = "SampleSize";
+        private const int DEFAULT_SAMPLE_SIZE = 1000;
         internal const string MONGODB_CONNECTION_MANAGER_NAME = "MongoDB";
         #endregion
 
@@ -309,6 +311,7 @@ namespace MongoDataSource
             createCustomProperty(customPropertyCollection, CONDITION_FROM_PROP_NAME, "'From' value for conditional query");
             createCustomProperty(customPropertyCollection, CONDITION_TO_PROP_NAME, "'To' value for conditional query");
             createCustomProperty(customPropertyCollection, CONDITION_DOC_PROP_NAME, "Mongo query document for conditional query");
+            createCustomProperty(customPropertyCollection, SAMPLE_SIZE_PROP_NAME, "The number of documents to sample for generating column metadata", DEFAULT_SAMPLE_SIZE);
         }
 
         /// <summary>
@@ -318,11 +321,12 @@ namespace MongoDataSource
         /// <param name="name"></param>
         /// <param name="description"></param>
         /// <returns></returns>
-        private IDTSCustomProperty100 createCustomProperty(IDTSCustomPropertyCollection100 customPropertyCollection, string name, string description)
+        private IDTSCustomProperty100 createCustomProperty(IDTSCustomPropertyCollection100 customPropertyCollection, string name, string description, dynamic defaultValue = null)
         {
             IDTSCustomProperty100 customProperty = customPropertyCollection.New();
             customProperty.Description = description;
             customProperty.Name = name;
+            customProperty.Value = defaultValue;
 
             return customProperty;
         }
@@ -365,11 +369,12 @@ namespace MongoDataSource
                 }
             }
 
-            // Get a sizeable sample of documents to increase the likelihood that all possible columns are present.
-            // The limit of 1000 is arbitrary. TODO: Make this configurable
+            int sampleSize = ComponentMetaData.CustomPropertyCollection[SAMPLE_SIZE_PROP_NAME].Value;
+
+            // Get a sample of documents to increase the likelihood that all possible columns are found.
             var documents = collection
                 .FindAll()
-                .SetLimit(1000);
+                .SetLimit(sampleSize);
 
             // Collect the distinct column names
             var elements = documents.SelectMany(document => document.Select(element => element.Name)).Distinct();
