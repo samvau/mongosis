@@ -36,7 +36,9 @@ namespace MongoDataSource
         private const string CONDITION_TO_PROP_NAME = "ConditionToValue";
         private const string CONDITION_DOC_PROP_NAME = "ConditionQuery";
         private const string SAMPLE_SIZE_PROP_NAME = "SampleSize";
+        private const string SAMPLE_OFFSET_PROP_NAME = "SampleOffset";
         private const int DEFAULT_SAMPLE_SIZE = 1000;
+        private const int DEFAULT_SAMPLE_OFFSET = 0;
         internal const string MONGODB_CONNECTION_MANAGER_NAME = "MongoDB";
         #endregion
 
@@ -312,6 +314,7 @@ namespace MongoDataSource
             createCustomProperty(customPropertyCollection, CONDITION_TO_PROP_NAME, "'To' value for conditional query");
             createCustomProperty(customPropertyCollection, CONDITION_DOC_PROP_NAME, "Mongo query document for conditional query");
             createCustomProperty(customPropertyCollection, SAMPLE_SIZE_PROP_NAME, "The number of documents to sample for generating column metadata", DEFAULT_SAMPLE_SIZE);
+            createCustomProperty(customPropertyCollection, SAMPLE_OFFSET_PROP_NAME, "The offset at which the sample begins", DEFAULT_SAMPLE_OFFSET);
         }
 
         /// <summary>
@@ -370,10 +373,13 @@ namespace MongoDataSource
             }
 
             int sampleSize = ComponentMetaData.CustomPropertyCollection[SAMPLE_SIZE_PROP_NAME].Value;
+            int sampleOffset = ComponentMetaData.CustomPropertyCollection[SAMPLE_OFFSET_PROP_NAME].Value;
 
             // Get a sample of documents to increase the likelihood that all possible columns are found.
+            // Offsetting the sample allows the user to move the sample window.
             var documents = collection
                 .FindAll()
+                .SetSkip(sampleOffset)
                 .SetLimit(sampleSize);
 
             // Collect the distinct column names

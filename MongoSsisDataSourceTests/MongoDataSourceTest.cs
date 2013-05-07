@@ -343,6 +343,7 @@ namespace MongoSourceTests
             IDTSCustomProperty100 toValueProp = Mock.Create<IDTSCustomProperty100>();
             IDTSCustomProperty100 queryProp = Mock.Create<IDTSCustomProperty100>();
             IDTSCustomProperty100 sampleSizeProp = Mock.Create<IDTSCustomProperty100>();
+            IDTSCustomProperty100 sampleOffsetProp = Mock.Create<IDTSCustomProperty100>();
 
             Mock.Arrange(() => customPropertyCollection.New()).Returns(collectionNameProp).InSequence();
             Mock.Arrange(() => customPropertyCollection.New()).Returns(conditionalFieldProp).InSequence();
@@ -350,6 +351,7 @@ namespace MongoSourceTests
             Mock.Arrange(() => customPropertyCollection.New()).Returns(toValueProp).InSequence();
             Mock.Arrange(() => customPropertyCollection.New()).Returns(queryProp).InSequence();
             Mock.Arrange(() => customPropertyCollection.New()).Returns(sampleSizeProp).InSequence();
+            Mock.Arrange(() => customPropertyCollection.New()).Returns(sampleOffsetProp).InSequence();
 
             assertSetPropertyNameAndDescription(collectionNameProp, MongoDataSource_Accessor.COLLECTION_NAME_PROP_NAME);
             Mock.ArrangeSet(() => collectionNameProp.UITypeEditor = Arg.Matches<string>(x => x == typeof(CollectionNameEditor).AssemblyQualifiedName));
@@ -359,10 +361,11 @@ namespace MongoSourceTests
             assertSetPropertyNameAndDescription(toValueProp, MongoDataSource_Accessor.CONDITION_TO_PROP_NAME);
             assertSetPropertyNameAndDescription(queryProp, MongoDataSource_Accessor.CONDITION_DOC_PROP_NAME);
             assertSetPropertyNameAndDescription(sampleSizeProp, MongoDataSource_Accessor.SAMPLE_SIZE_PROP_NAME);
+            assertSetPropertyNameAndDescription(sampleOffsetProp, MongoDataSource_Accessor.SAMPLE_OFFSET_PROP_NAME);
 
             target.AddCustomProperties(customPropertyCollection);
 
-            Mock.Assert(() => customPropertyCollection.New(), Occurs.Exactly(6));
+            Mock.Assert(() => customPropertyCollection.New(), Occurs.Exactly(7));
 
             Mock.Assert(collectionNameProp);
             Mock.Assert(conditionalFieldProp);
@@ -370,6 +373,7 @@ namespace MongoSourceTests
             Mock.Assert(toValueProp);
             Mock.Assert(queryProp);
             Mock.Assert(sampleSizeProp);
+            Mock.Assert(sampleOffsetProp);
         }
 
         private void assertSetPropertyNameAndDescription(IDTSCustomProperty100 propMock, String propName)
