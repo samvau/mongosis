@@ -35,6 +35,10 @@ namespace MongoDataSource
         private const string CONDITION_FROM_PROP_NAME = "ConditionFromValue";
         private const string CONDITION_TO_PROP_NAME = "ConditionToValue";
         private const string CONDITION_DOC_PROP_NAME = "ConditionQuery";
+        private const string SAMPLE_SIZE_PROP_NAME = "SampleSize";
+        private const string SAMPLE_OFFSET_PROP_NAME = "SampleOffset";
+        private const int DEFAULT_SAMPLE_SIZE = 1000;
+        private const int DEFAULT_SAMPLE_OFFSET = 0;
         internal const string MONGODB_CONNECTION_MANAGER_NAME = "MongoDB";
         #endregion
 
@@ -309,6 +313,8 @@ namespace MongoDataSource
             createCustomProperty(customPropertyCollection, CONDITION_FROM_PROP_NAME, "'From' value for conditional query");
             createCustomProperty(customPropertyCollection, CONDITION_TO_PROP_NAME, "'To' value for conditional query");
             createCustomProperty(customPropertyCollection, CONDITION_DOC_PROP_NAME, "Mongo query document for conditional query");
+            createCustomProperty(customPropertyCollection, SAMPLE_SIZE_PROP_NAME, "The number of documents to sample for generating column metadata", DEFAULT_SAMPLE_SIZE);
+            createCustomProperty(customPropertyCollection, SAMPLE_OFFSET_PROP_NAME, "The offset at which the sample begins", DEFAULT_SAMPLE_OFFSET);
         }
 
         /// <summary>
@@ -318,11 +324,12 @@ namespace MongoDataSource
         /// <param name="name"></param>
         /// <param name="description"></param>
         /// <returns></returns>
-        private IDTSCustomProperty100 createCustomProperty(IDTSCustomPropertyCollection100 customPropertyCollection, string name, string description)
+        private IDTSCustomProperty100 createCustomProperty(IDTSCustomPropertyCollection100 customPropertyCollection, string name, string description, dynamic defaultValue = null)
         {
             IDTSCustomProperty100 customProperty = customPropertyCollection.New();
             customProperty.Description = description;
             customProperty.Name = name;
+            customProperty.Value = defaultValue;
 
             return customProperty;
         }
@@ -365,25 +372,35 @@ namespace MongoDataSource
                 }
             }
 
-            BsonDocument document = collection.FindOne();
+            int sampleSize = ComponentMetaData.CustomPropertyCollection[SAMPLE_SIZE_PROP_NAME].Value;
+            int sampleOffset = ComponentMetaData.CustomPropertyCollection[SAMPLE_OFFSET_PROP_NAME].Value;
 
-            // Walk the columns in the schema,
-            // and for each data column create an output column and an external metadata column.
-            foreach (BsonElement bsonElement in document)
+            // Get a sample of documents to increase the likelihood that all possible columns are found.
+            // Offsetting the sample allows the user to move the sample window.
+            var documents = collection
+                .FindAll()
+                .SetSkip(sampleOffset)
+                .SetLimit(sampleSize);
+
+            // Collect the distinct column names
+            var elements = documents.SelectMany(document => document.Select(element => element.Name)).Distinct();
+
+            // For each data column, create an output column and an external metadata column.
+            foreach (var element in elements)
             {
                 // Try to find a document that has a [non null] value for the particular column.
-                BsonDocument documentWithNonNullElementValue = collection.FindOne(Query.NE(bsonElement.Name, BsonNull.Value));
+                BsonDocument documentWithNonNullElementValue = collection.FindOne(Query.NE(element, BsonNull.Value));
 
-                // If a document is found with a value for the element, use the element with the non-null value
-                // instead of the original, which may or may not have a value. This will help to ensure that
-                // a column will not be treated as a string just because some of its values were null.
-                BsonElement bsonElementWithValue = null;
-                if (documentWithNonNullElementValue != null)
-                    bsonElementWithValue = documentWithNonNullElementValue.GetElement(bsonElement.Name);
+                // If the column is not populated in any document of the collection, don't output the column.
+                // Without a value, we can't determine the data type of the column.
+                if (documentWithNonNullElementValue == null)
+                    continue;
+
+                BsonElement bsonElement = documentWithNonNullElementValue.GetElement(element);
 
                 foreach (IDTSOutput100 output in ComponentMetaData.OutputCollection)
                 {
-                    IDTSOutputColumn100 outColumn = BuildOutputColumn(output, bsonElementWithValue ?? bsonElement);
+                    IDTSOutputColumn100 outColumn = BuildOutputColumn(output, bsonElement);
                     IDTSExternalMetadataColumn100 externalColumn = BuildExternalMetadataColumn(output.ExternalMetadataColumnCollection, outColumn);
 
                     // Map the external column to the output column.
@@ -647,7 +664,7 @@ namespace MongoDataSource
             }
             else
             {
-                if (!value.IsObjectId && !value.IsString && !value.IsBsonSymbol)
+                if (dt != DataType.DT_STR && !value.IsObjectId && !value.IsString && !value.IsBsonSymbol)
                     ComponentMetaData.FireWarning(0, "MongoDataSource", "Converting " + value.BsonType + " to string, though datatype was " + dt, String.Empty, 0);
 
                 return value.ToString();
