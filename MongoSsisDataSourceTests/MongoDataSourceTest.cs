@@ -27,7 +27,6 @@ namespace MongoSourceTests
         ///A test for GetColumnDataType
         ///</summary>
         [TestMethod(), DeploymentItem("MongoSsisDataSource.dll")]
-
         public void TestGetColumnDataTypeReturnsIntegerTypeForBsonInteger()
         {
             CheckForCorrectColumnDataType(new BsonInt32(12), DataType.DT_I8);
@@ -72,8 +71,8 @@ namespace MongoSourceTests
 
         private void CheckForCorrectColumnDataType(BsonValue value, DataType dt)
         {
-            MongoDataSource_Accessor target = new MongoDataSource_Accessor();
-            Assert.AreEqual(dt, target.GetColumnDataType(value));
+            PrivateObject p = new PrivateObject(typeof(MongoDataSource.MongoDataSource));
+            Assert.AreEqual(dt, (DataType)p.Invoke("GetColumnDataType", new object[] { value}));
 
         }
 
@@ -190,9 +189,8 @@ namespace MongoSourceTests
 
         private void CheckForCorrectDataTypeFromBson(BsonValue bsonValue, DataType dataType, object expectedValue)
         {
-            MongoDataSource_Accessor target = new MongoDataSource_Accessor();
-
-            object actual = target.GetDataTypeValueFromBsonValue(bsonValue, dataType);
+            PrivateObject p = new PrivateObject(typeof(MongoDataSource.MongoDataSource));
+            object actual = p.Invoke("GetDataTypeValueFromBsonValue", new object[] { bsonValue, dataType });
             Assert.AreEqual(expectedValue, actual);
         }
 
@@ -243,7 +241,7 @@ namespace MongoSourceTests
 
         public void TestBuildOutputColumn(String elementname, BsonValue bsonValue, DataType expectedDataType, int length, int codepage)
         {
-            MongoDataSource_Accessor target = new MongoDataSource_Accessor();
+            PrivateObject p = new PrivateObject(typeof(MongoDataSource.MongoDataSource));
 
             IDTSOutput100 output = Mock.Create<IDTSOutput100>(Constructor.Mocked);
 
@@ -258,7 +256,7 @@ namespace MongoSourceTests
             BsonElement el = new BsonElement(elementname, bsonValue);
             Mock.ArrangeSet(() => expected.Name = Arg.Matches<String>(x => x == elementname));
 
-            IDTSOutputColumn100 actual = target.BuildOutputColumn(output, el);
+            IDTSOutputColumn100 actual = (IDTSOutputColumn100)p.Invoke("BuildOutputColumn", new object[] { output, el });
 
             Mock.Assert(() => expected.SetDataTypeProperties(expectedDataType, length, 0, 0, codepage));
             Mock.ArrangeSet(() => expected.ErrorRowDisposition = Arg.Matches<DTSRowDisposition>(x => x == DTSRowDisposition.RD_FailComponent)).OccursOnce();
@@ -271,15 +269,15 @@ namespace MongoSourceTests
         [TestMethod()]
         public void TestReleaseConnectionsDelegatesToConnectionManager()
         {
-            MongoDataSource_Accessor target = new MongoDataSource_Accessor();
+            PrivateObject p = new PrivateObject(typeof(MongoDataSource.MongoDataSource));
 
             IDTSConnectionManager100 connManager = Mock.Create<IDTSConnectionManager100>(Constructor.Mocked);
-            target.m_ConnMgr = connManager;
+            p.SetField("m_ConnMgr", connManager);
 
             MongoDatabase mockedDb = Mock.Create<MongoDatabase>(Constructor.Mocked);
-            target.database = mockedDb;
+            p.SetField("database", mockedDb);
 
-            target.ReleaseConnections();
+            p.Invoke("ReleaseConnections", null);
 
             Mock.Assert(() => connManager.ReleaseConnection(mockedDb));
         }
@@ -291,7 +289,7 @@ namespace MongoSourceTests
         [DeploymentItem("MongoSsisDataSource.dll")]
         public void BuildExternalMetadataColumnTest()
         {
-            MongoDataSource_Accessor target = new MongoDataSource_Accessor();
+            PrivateObject p = new PrivateObject(typeof(MongoDataSource.MongoDataSource));
 
             IDTSOutputColumn100 outputColumn = Mock.Create<IDTSOutputColumn100>(Constructor.Mocked);
 
@@ -321,7 +319,7 @@ namespace MongoSourceTests
             Mock.ArrangeSet(() => expected.Scale = Arg.Matches<int>(x => x == expectedScale)).OccursOnce();
             Mock.ArrangeSet(() => expected.CodePage = Arg.Matches<int>(x => x == expectedCodePage)).OccursOnce();
 
-            IDTSExternalMetadataColumn100 actual = target.BuildExternalMetadataColumn(outputCollection, outputColumn);
+            IDTSExternalMetadataColumn100 actual = (IDTSExternalMetadataColumn100)p.Invoke("BuildExternalMetadataColumn", new object[] { outputCollection, outputColumn });
 
             Mock.Assert(expected);
         }
@@ -333,7 +331,7 @@ namespace MongoSourceTests
         [DeploymentItem("MongoSsisDataSource.dll")]
         public void AddCustomPropertiesTest()
         {
-            MongoDataSource_Accessor target = new MongoDataSource_Accessor();
+            PrivateObject p = new PrivateObject(typeof(MongoDataSource.MongoDataSource));
 
             IDTSCustomPropertyCollection100 customPropertyCollection = Mock.Create<IDTSCustomPropertyCollection100>();
 
@@ -353,17 +351,19 @@ namespace MongoSourceTests
             Mock.Arrange(() => customPropertyCollection.New()).Returns(sampleSizeProp).InSequence();
             Mock.Arrange(() => customPropertyCollection.New()).Returns(sampleOffsetProp).InSequence();
 
-            assertSetPropertyNameAndDescription(collectionNameProp, MongoDataSource_Accessor.COLLECTION_NAME_PROP_NAME);
+            System.Reflection.BindingFlags flags = System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic;
+
+            assertSetPropertyNameAndDescription(collectionNameProp, (string)p.GetField("COLLECTION_NAME_PROP_NAME", flags));
             Mock.ArrangeSet(() => collectionNameProp.UITypeEditor = Arg.Matches<string>(x => x == typeof(CollectionNameEditor).AssemblyQualifiedName));
 
-            assertSetPropertyNameAndDescription(conditionalFieldProp, MongoDataSource_Accessor.CONDITIONAL_FIELD_PROP_NAME);
-            assertSetPropertyNameAndDescription(fromValueProp, MongoDataSource_Accessor.CONDITION_FROM_PROP_NAME);
-            assertSetPropertyNameAndDescription(toValueProp, MongoDataSource_Accessor.CONDITION_TO_PROP_NAME);
-            assertSetPropertyNameAndDescription(queryProp, MongoDataSource_Accessor.CONDITION_DOC_PROP_NAME);
-            assertSetPropertyNameAndDescription(sampleSizeProp, MongoDataSource_Accessor.SAMPLE_SIZE_PROP_NAME);
-            assertSetPropertyNameAndDescription(sampleOffsetProp, MongoDataSource_Accessor.SAMPLE_OFFSET_PROP_NAME);
+            assertSetPropertyNameAndDescription(conditionalFieldProp, (string)p.GetField("CONDITIONAL_FIELD_PROP_NAME", flags));
+            assertSetPropertyNameAndDescription(fromValueProp, (string)p.GetField("CONDITION_FROM_PROP_NAME", flags));
+            assertSetPropertyNameAndDescription(toValueProp, (string)p.GetField("CONDITION_TO_PROP_NAME", flags));
+            assertSetPropertyNameAndDescription(queryProp, (string)p.GetField("CONDITION_DOC_PROP_NAME", flags));
+            assertSetPropertyNameAndDescription(sampleSizeProp, (string)p.GetField("SAMPLE_SIZE_PROP_NAME", flags));
+            assertSetPropertyNameAndDescription(sampleOffsetProp, (string)p.GetField("SAMPLE_OFFSET_PROP_NAME", flags));
 
-            target.AddCustomProperties(customPropertyCollection);
+            p.Invoke("AddCustomProperties", new object[] { customPropertyCollection });
 
             Mock.Assert(() => customPropertyCollection.New(), Occurs.Exactly(7));
 
@@ -390,13 +390,15 @@ namespace MongoSourceTests
         [DeploymentItem("MongoSsisDataSource.dll")]
         public void BuildQueryBuildsQueryWithFromAndToTest()
         {
-            MongoDataSource_Accessor target = new MongoDataSource_Accessor();
-
+            PrivateObject p = new PrivateObject(typeof(MongoDataSource.MongoDataSource));
+            System.Reflection.BindingFlags flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.InvokeMethod;
             string fieldName = "field1";
             string fromVal = "fromval";
             string toVal = "toval";
 
-            IMongoQuery query = target.BuildQuery(fieldName, fromVal, toVal);
+            Type[] types = new Type[] { typeof(string), typeof(BsonValue), typeof(BsonValue) };
+            object[] pars = new object[] { fieldName, (BsonValue)fromVal, (BsonValue)toVal };
+            IMongoQuery query = (IMongoQuery)p.Invoke("BuildQuery", flags, types, pars);
 
             Assert.AreEqual("{ \"" + fieldName + "\" : { \"$gte\" : \"" + fromVal + "\", \"$lte\" : \"" + toVal + "\" } }", query.ToString());
         }
@@ -408,12 +410,15 @@ namespace MongoSourceTests
         [DeploymentItem("MongoSsisDataSource.dll")]
         public void BuildQueryBuildsQueryWithFromOnlyTest()
         {
-            MongoDataSource_Accessor target = new MongoDataSource_Accessor();
+            PrivateObject p = new PrivateObject(typeof(MongoDataSource.MongoDataSource));
+            System.Reflection.BindingFlags flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.InvokeMethod;
 
             string fieldName = "field1";
             string fromVal = "fromval";
 
-            IMongoQuery query = target.BuildQuery(fieldName, fromVal, null);
+            Type[] types = new Type[] { typeof(string), typeof(BsonValue), typeof(BsonValue) };
+            object[] pars = new object[] { fieldName, (BsonValue)fromVal, (BsonValue)null};
+            IMongoQuery query = (IMongoQuery)p.Invoke("BuildQuery", flags, types, pars);
 
             Assert.AreEqual("{ \"" + fieldName + "\" : { \"$gte\" : \"" + fromVal + "\" } }", query.ToString());
         }
@@ -425,12 +430,12 @@ namespace MongoSourceTests
         [DeploymentItem("MongoSsisDataSource.dll")]
         public void BuildQueryBuildsQueryWithToOnlyTest()
         {
-            MongoDataSource_Accessor target = new MongoDataSource_Accessor();
+            PrivateObject p = new PrivateObject(typeof(MongoDataSource.MongoDataSource));
 
             string fieldName = "field1";
             string toVal = "toval";
 
-            IMongoQuery query = target.BuildQuery(fieldName, null, toVal);
+            IMongoQuery query = (IMongoQuery)p.Invoke("BuildQuery", new object[] { fieldName, (BsonValue)null, (BsonValue)toVal });
 
             Assert.AreEqual("{ \"" + fieldName + "\" : { \"$lte\" : \"" + toVal + "\" } }", query.ToString());
         }
@@ -442,13 +447,10 @@ namespace MongoSourceTests
         [DeploymentItem("MongoSsisDataSource.dll")]
         public void ParseConditionValueForSimpleDateTest()
         {
-            MongoDataSource_Accessor target = new MongoDataSource_Accessor();
-
+            PrivateObject p = new PrivateObject(typeof(MongoDataSource.MongoDataSource));
             String value = "12/12/2012";
-
-            object parsedValue = target.ParseConditionValue(value, DataType.DT_DATE);
-
-            Assert.AreEqual(DateTime.Parse(value).ToLongDateString(), ((BsonDateTime)parsedValue).AsDateTime.ToLongDateString());
+            object parsedValue = p.Invoke("ParseConditionValue", new object[] { value, DataType.DT_DATE });
+            Assert.AreEqual(DateTime.Parse(value).ToUniversalTime().ToLongDateString(), ((BsonDateTime)parsedValue).AsDateTime.ToLongDateString());
         }
 
         /// <summary>
@@ -458,9 +460,9 @@ namespace MongoSourceTests
         [DeploymentItem("MongoSsisDataSource.dll")]
         public void ParseConditionValueForNowTest()
         {
-            MongoDataSource_Accessor target = new MongoDataSource_Accessor();
+            PrivateObject p = new PrivateObject(typeof(MongoDataSource.MongoDataSource));
 
-            object parsedValue = target.ParseConditionValue("now", DataType.DT_DATE);
+            object parsedValue = p.Invoke("ParseConditionValue", new object[] { "now", DataType.DT_DATE });
 
             Assert.IsTrue(parsedValue is BsonDateTime);
 
@@ -474,9 +476,9 @@ namespace MongoSourceTests
         [DeploymentItem("MongoSsisDataSource.dll")]
         public void ParseConditionValueForTodayTest()
         {
-            MongoDataSource_Accessor target = new MongoDataSource_Accessor();
+            PrivateObject p = new PrivateObject(typeof(MongoDataSource.MongoDataSource));
 
-            object parsedValue = target.ParseConditionValue("today", DataType.DT_DATE);
+            object parsedValue = p.Invoke("ParseConditionValue", new object[] { "today", DataType.DT_DATE });
 
             Assert.AreEqual(DateTime.Now.ToLongDateString(), ((BsonDateTime)parsedValue).AsDateTime.ToLongDateString());
         }
@@ -487,9 +489,9 @@ namespace MongoSourceTests
         [TestMethod()]
         public void ParseConditionValueForYesterdayTest()
         {
-            MongoDataSource_Accessor target = new MongoDataSource_Accessor();
+            PrivateObject p = new PrivateObject(typeof(MongoDataSource.MongoDataSource));
 
-            object parsedValue = target.ParseConditionValue("yesterday", DataType.DT_DATE);
+            object parsedValue = p.Invoke("ParseConditionValue", new object[] { "yesterday", DataType.DT_DATE });
 
             Assert.AreEqual(DateTime.Now.AddDays(-1).ToLongDateString(), ((BsonDateTime)parsedValue).AsDateTime.ToLongDateString());
         }
@@ -500,13 +502,13 @@ namespace MongoSourceTests
         [TestMethod()]
         public void ParseConditionValueForRelativeDateTest()
         {
-            MongoDataSource_Accessor target = new MongoDataSource_Accessor();
+            PrivateObject p = new PrivateObject(typeof(MongoDataSource.MongoDataSource));
 
-            object parsedValue = target.ParseConditionValue("-2", DataType.DT_DATE);
+            object parsedValue = p.Invoke("ParseConditionValue", new object[] { "-2", DataType.DT_DATE });
 
             Assert.AreEqual(DateTime.Now.AddDays(-2).ToLongDateString(), ((BsonDateTime)parsedValue).AsDateTime.ToLongDateString());
 
-            parsedValue = target.ParseConditionValue("-4", DataType.DT_DATE);
+            parsedValue = p.Invoke("ParseConditionValue", new object[] { "-4", DataType.DT_DATE });
 
             Assert.AreEqual(DateTime.Now.AddDays(-4).ToLongDateString(), ((BsonDateTime)parsedValue).AsDateTime.ToLongDateString());
         }
@@ -517,15 +519,15 @@ namespace MongoSourceTests
         [TestMethod()]
         public void ParseConditionValueForIntTest()
         {
-            MongoDataSource_Accessor target = new MongoDataSource_Accessor();
+            PrivateObject p = new PrivateObject(typeof(MongoDataSource.MongoDataSource));
 
             string value = "123";
             BsonInt64 expected = new BsonInt64(Int64.Parse(value));
-            object parsedValue = target.ParseConditionValue(value, DataType.DT_I8);
+            object parsedValue = p.Invoke("ParseConditionValue", new object[] { value, DataType.DT_I8 });
 
             Assert.AreEqual(expected, parsedValue);
 
-            parsedValue = target.ParseConditionValue(value, DataType.DT_I4);
+            parsedValue = p.Invoke("ParseConditionValue", new object[] { value, DataType.DT_I4 });
 
             Assert.AreEqual(expected, parsedValue);
         }
@@ -536,10 +538,10 @@ namespace MongoSourceTests
         [TestMethod()]
         public void ParseConditionValueForStringTest()
         {
-            MongoDataSource_Accessor target = new MongoDataSource_Accessor();
+            PrivateObject p = new PrivateObject(typeof(MongoDataSource.MongoDataSource));
 
             string value = "blah";
-            object parsedValue = target.ParseConditionValue(value, DataType.DT_STR);
+            object parsedValue = p.Invoke("ParseConditionValue", new object[] { value, DataType.DT_STR });
 
             Assert.AreEqual(new BsonString(value), parsedValue);
         }
@@ -550,15 +552,16 @@ namespace MongoSourceTests
         [TestMethod()]
         public void ParseConditionValueForDoubleTest()
         {
-            MongoDataSource_Accessor target = new MongoDataSource_Accessor();
+            PrivateObject p = new PrivateObject(typeof(MongoDataSource.MongoDataSource));
 
-            string value = "12.34";
+            string value = "12" + System.Globalization.CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator + "34";
             BsonDouble expected = new BsonDouble(Double.Parse(value));
-            object parsedValue = target.ParseConditionValue(value, DataType.DT_R8);
+
+            object parsedValue = p.Invoke("ParseConditionValue", new object[] { value, DataType.DT_R8 });
 
             Assert.AreEqual(expected, parsedValue);
 
-            parsedValue = target.ParseConditionValue(value, DataType.DT_R4);
+            parsedValue = p.Invoke("ParseConditionValue", new object[] { value, DataType.DT_R4 });
 
             Assert.AreEqual(expected, parsedValue);
         }

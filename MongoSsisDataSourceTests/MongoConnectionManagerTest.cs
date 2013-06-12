@@ -56,12 +56,12 @@ namespace MongoSourceTests
         [TestMethod(), DeploymentItem("MongoSsisDataSource.dll")]
         public void UpdateConnectionStringTest()
         {
-            MongoConnectionManager_Accessor target = new MongoConnectionManager_Accessor();
-            target._serverName = "db1";
-            target._password = "pass1";
-            target._userName = "user1";
-            target.UpdateConnectionString();
-            Assert.AreEqual(target._connectionString, "mongodb://user1:pass1@db1");
+            PrivateObject p = new PrivateObject(typeof(MongoConnectionManager));
+            p.SetField("_serverName", "db1");
+            p.SetField("_password", "pass1");
+            p.SetField("_userName", "user1");
+            p.Invoke("UpdateConnectionString", null);
+            Assert.AreEqual((string)p.GetField("_connectionString"), "mongodb://user1:pass1@db1");
         }
 
         ///<summary>
@@ -70,13 +70,13 @@ namespace MongoSourceTests
         [TestMethod(), DeploymentItem("MongoSsisDataSource.dll")]
         public void UpdateConnectionStringSslEnabledTest()
         {
-            MongoConnectionManager_Accessor target = new MongoConnectionManager_Accessor();
-            target._serverName = "db1";
-            target._password = "pass1";
-            target._userName = "user1";
-            target._ssl = true;
-            target.UpdateConnectionString();
-            Assert.AreEqual(target._connectionString, "mongodb://user1:pass1@db1/?ssl=true;sslverifycertificate=false");
+            PrivateObject p = new PrivateObject(typeof(MongoConnectionManager));
+            p.SetField("_serverName", "db1");
+            p.SetField("_password", "pass1");
+            p.SetField("_userName", "user1");
+            p.SetField("_ssl", true);
+            p.Invoke("UpdateConnectionString", null);
+            Assert.AreEqual((string)p.GetField("_connectionString"), "mongodb://user1:pass1@db1/?ssl=true;sslverifycertificate=false");
         }
 
         ///<summary>
@@ -85,14 +85,14 @@ namespace MongoSourceTests
         [TestMethod(), DeploymentItem("MongoSsisDataSource.dll")]
         public void UpdateConnectionStringSslEnabledSlaveOkEnabledTest()
         {
-            MongoConnectionManager_Accessor target = new MongoConnectionManager_Accessor();
-            target._serverName = "db1";
-            target._password = "pass1";
-            target._userName = "user1";
-            target._ssl = true;
-            target.SlaveOk = true;
-            target.UpdateConnectionString();
-            Assert.AreEqual(target._connectionString, "mongodb://user1:pass1@db1/?connect=direct;slaveok=true;ssl=true;sslverifycertificate=false");
+            PrivateObject p = new PrivateObject(typeof(MongoConnectionManager));
+            p.SetField("_serverName", "db1");
+            p.SetField("_password", "pass1");
+            p.SetField("_userName", "user1");
+            p.SetField("_ssl", true);
+            p.SetProperty("SlaveOk", true);
+            p.Invoke("UpdateConnectionString", null);
+            Assert.AreEqual((string)p.GetField("_connectionString"), "mongodb://user1:pass1@db1/?connect=direct;slaveok=true;ssl=true;sslverifycertificate=false");
         }
 
         ///<summary>
@@ -101,13 +101,13 @@ namespace MongoSourceTests
         [TestMethod(), DeploymentItem("MongoSsisDataSource.dll")]
         public void UpdateConnectionStringSlaveOkEnabledTest()
         {
-            MongoConnectionManager_Accessor target = new MongoConnectionManager_Accessor();
-            target._serverName = "db1";
-            target._password = "pass1";
-            target._userName = "user1";
-            target.SlaveOk = true;
-            target.UpdateConnectionString();
-            Assert.AreEqual(target._connectionString, "mongodb://user1:pass1@db1/?connect=direct;slaveok=true");
+            PrivateObject p = new PrivateObject(typeof(MongoConnectionManager));
+            p.SetField("_serverName", "db1");
+            p.SetField("_password", "pass1");
+            p.SetField("_userName", "user1");
+            p.SetProperty("SlaveOk", true);
+            p.Invoke("UpdateConnectionString", null);
+            Assert.AreEqual((string)p.GetField("_connectionString"), "mongodb://user1:pass1@db1/?connect=direct;slaveok=true");
         }
 
         ///<summary>

@@ -1,12 +1,7 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{171D740A-28B1-4DC8-8DE1-679BC05681C3}"
-	ProjectSection(SolutionItems) = preProject
-		Local.testsettings = Local.testsettings
-		MongoSsisDataSource.vsmdi = MongoSsisDataSource.vsmdi
-		TraceAndTestImpact.testsettings = TraceAndTestImpact.testsettings
-	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MongoSsisDataSource", "MongoSsisDataSource\MongoSsisDataSource.csproj", "{EA2F5DA3-DF0C-49E3-958B-508A13D88729}"
 EndProject
@@ -15,9 +10,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MongoSsisSourceTests", "MongoSsisDataSourceTests\MongoSsisSourceTests.csproj", "{819DDAED-CD51-4893-8698-FDA949985116}"
 EndProject
 Global
-	GlobalSection(TestCaseManagementSettings) = postSolution
-		CategoryFile = MongoSsisDataSource.vsmdi
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU

@@ -47,8 +47,8 @@ namespace MongoSourceTests
         [TestMethod()]
         public void GetEditStyleTest()
         {
-            CollectionNameEditor_Accessor target = new CollectionNameEditor_Accessor();
-            Assert.AreEqual(UITypeEditorEditStyle.DropDown, target.GetEditStyle(null));
+            PrivateObject p = new PrivateObject(typeof(CollectionNameEditor));            
+            Assert.AreEqual(UITypeEditorEditStyle.DropDown, (UITypeEditorEditStyle)p.Invoke("GetEditStyle", new object[] { null }));
         }
 
         /// <summary>
@@ -88,11 +88,11 @@ namespace MongoSourceTests
         [DeploymentItem("MongoSsisDataSource.dll")]
         public void OnListBoxSelectedValueChangedTest()
         {
-            CollectionNameEditor_Accessor target = new CollectionNameEditor_Accessor();
+            PrivateObject p = new PrivateObject(typeof(CollectionNameEditor));
             IWindowsFormsEditorService serviceMock = Mock.Create<IWindowsFormsEditorService>();
-            target.edSvc = serviceMock;
+            p.SetField("edSvc", serviceMock);
             Mock.Arrange(() => serviceMock.CloseDropDown()).OccursOnce();
-            target.OnListBoxSelectedValueChanged(null, null);
+            p.Invoke("OnListBoxSelectedValueChanged", new object[] { null, null });
             Mock.Assert(serviceMock);
         }
 
@@ -140,12 +140,10 @@ namespace MongoSourceTests
 
         private ListBox SetUpListBoxForTest(string[] names)
         {
-            CollectionNameEditor_Accessor target = new CollectionNameEditor_Accessor();
+            PrivateObject p = new PrivateObject(typeof(CollectionNameEditor));
             MongoDatabase database = Mock.Create<MongoDatabase>(Constructor.Mocked);
-
             Mock.Arrange(() => database.GetCollectionNames()).Returns(names);
-
-            return target.BuildListBox(database);
+            return (ListBox)p.Invoke("BuildListBox", new object[] { database });
         }
 
         private void NeedSealedClassMocks()

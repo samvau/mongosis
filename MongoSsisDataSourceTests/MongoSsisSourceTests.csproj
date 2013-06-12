@@ -80,6 +80,7 @@
     <Compile Include="MongoConnectionManagerTest.cs" />
     <Compile Include="MongoDataSourceTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="MongoDataDestinationTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\MongoSsisDataSource\MongoSsisDataSource.csproj">
@@ -89,7 +90,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="mongotests.snk" />
-    <Shadow Include="Test References\MongoSsisDataSource.accessor" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Test References\" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -12,3 +12,16 @@ Installer/bin/
 Installer/obj/
 Installer/MongoSsisDataSource.dll
 MongoDataSourceTests/mongodatasource.snk
+[Oo]bj
+[Bb]in
+*.user
+*.suo
+*.[Cc]ache
+*.bak
+*.ncb
+*.log 
+*.DS_Store
+[Tt]humbs.db 
+_ReSharper.*
+*.resharper
+Ankh.NoLoad
